@@ -1,5 +1,7 @@
 import './page.css';
-import { createHeader } from './Header';
+import {
+  createHeader
+} from '../Header/Header';
 
 export const createPage = () => {
   const article = document.createElement('article');
@@ -12,8 +14,11 @@ export const createPage = () => {
   };
 
   const onLogin = () => {
-    user = { name: 'Jane Doe' };
+    user = {
+      name: 'Jane Doe'
+    };
     rerenderHeader();
+    å
   };
 
   const onLogout = () => {
@@ -22,12 +27,19 @@ export const createPage = () => {
   };
 
   const onCreateAccount = () => {
-    user = { name: 'Jane Doe' };
+    user = {
+      name: 'Jane Doe'
+    };
     rerenderHeader();
   };
 
   const createHeaderElement = () => {
-    return createHeader({ onLogin, onLogout, onCreateAccount, user });
+    return createHeader({
+      onLogin,
+      onLogout,
+      onCreateAccount,
+      user
+    });
   };
 
   header = createHeaderElement();

@@ -1,4 +1,6 @@
-import { createHeader } from './Header';
+import {
+  createHeader
+} from '../Header/Header';
 
 export default {
   title: 'Example/Header',
@@ -8,9 +10,15 @@ export default {
   },
   // More on argTypes: https://storybook.js.org/docs/html/api/argtypes
   argTypes: {
-    onLogin: { action: 'onLogin' },
-    onLogout: { action: 'onLogout' },
-    onCreateAccount: { action: 'onCreateAccount' },
+    onLogin: {
+      action: 'onLogin'
+    },
+    onLogout: {
+      action: 'onLogout'
+    },
+    onCreateAccount: {
+      action: 'onCreateAccount'
+    },
   },
 };
 
