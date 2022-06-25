@@ -1,0 +1,51 @@
+{
+  "name": "gf_canvas_temp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.3",
+    "lodash": "^4.17.21",
+    "pixi.js": "^6.4.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.5",
+    "@rollup/plugin-alias": "^3.1.9",
+    "@rollup/plugin-json": "^4.1.0",
+    "@storybook/addon-actions": "^6.5.9",
+    "@storybook/addon-controls": "^6.5.9",
+    "@storybook/addon-docs": "^6.5.9",
+    "@storybook/addon-essentials": "^6.4.22",
+    "@storybook/addon-interactions": "^6.5.9",
+    "@storybook/addon-jest": "^6.5.9",
+    "@storybook/addon-links": "^6.5.9",
+    "@storybook/addon-storyshots": "^6.5.9",
+    "@storybook/addon-storysource": "^6.5.9",
+    "@storybook/addon-viewport": "^6.5.9",
+    "@storybook/builder-webpack4": "^6.5.9",
+    "@storybook/html": "^6.1.21",
+    "@storybook/manager-webpack4": "^6.5.9",
+    "@storybook/testing-library": "^0.0.13",
+    "@storybook/theming": "^6.5.9",
+    "babel-loader": "^8.2.5",
+    "cypress": "^10.2.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-jest": "^26.5.3",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "jest": "^28.1.1",
+    "prettier": "^2.7.1",
+    "prettier-eslint": "^15.0.1",
+    "rollup": "^2.75.7",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0"
+  }
+}
