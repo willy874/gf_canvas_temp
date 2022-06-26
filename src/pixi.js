@@ -5,7 +5,7 @@ import {
   Texture,
   Sprite,
   Loader,
-  Graphics
+  Graphics,
 } from 'pixi.js'
 
 export {
@@ -15,5 +15,5 @@ export {
   Texture,
   Sprite,
   Loader,
-  Graphics
+  Graphics,
 }

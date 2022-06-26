@@ -1,11 +1,12 @@
 {
-  "include": ["./src/**/*", "./types/**/*"],
+  "include": ["./src/**/*", "types/**/*", "stories/**/*"],
   "compilerOptions": {
     "checkJs": true,
     "downlevelIteration": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@base/*": ["./src/*"],
+      "@type/*": ["./src/*"]
     },
     "lib": ["es2021", "dom"]
   },
