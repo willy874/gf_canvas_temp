@@ -18,6 +18,7 @@ import {
 export default class BaseGraphics {
   constructor() {
     this.container = new Container()
+    this.children = []
   }
 
   /**
@@ -53,6 +54,9 @@ export default class BaseGraphics {
   draw() {}
 
   create() {
+    if (this.children.length) {
+      this.container.addChild(...this.children)
+    }
     this.draw()
   }
 

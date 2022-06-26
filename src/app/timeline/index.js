@@ -1,44 +1,47 @@
 import {
   Application,
 } from '@base/pixi';
+import {
+  EventCollection
+} from './data'
+import {
+  FontSize,
+} from '@base/enums'
 import DateLine from './components/dateline'
+import EventChart from './components/event-chart'
 
-/**
- * @param {TimelineProps} props 
- * @returns {Required<TimelineProps>}
- */
-function getTimelineProps(props) {
-  return {
-    width: props.width,
-    height: props.height,
-    startTime: props.startTime || Date.now() - 1000 * 60 * 60 * 24 * 90, // 三個月
-    endTime: props.endTime || Date.now(),
-    x: props.x || 20,
-    y: props.y || 40,
-    list: props.list || [],
-  }
-}
 
 /**
  * @typedef {Object} TimeLine 
  * @property {Application} app
- * @property {DateLine} dateline
+ * @property {DateLine} dateLine
+ * @property {EventChart} eventChart
+ * @property {EventCollection} collection
  */
 /**
- * @param {TimelineProps} props 
+ * @param {TimelineProps} options 
  * @returns {TimeLine}
  */
-export default function createTimeLine(props) {
-  const {
-    width,
-    height,
-    startTime,
-    endTime,
-    x,
-    y,
-    list
-  } = getTimelineProps(props)
+export default function createTimeLine(options) {
+  // BaseProps
+  const collection = new EventCollection(options.list)
+  const width = options.width
+  const height = options.height
+  const baseX = options.x
+  const baseY = options.y
+  const startTime = options.startTime || collection.getMinStartTime()
+  const endTime = options.startTime || collection.getMaxEndTime()
 
+  const dataLineProps = {
+    fontSize: FontSize.SMALL,
+    lineSolidWidth: 1,
+    paddingBottom: 20,
+    textHorizontalSpacing: 24,
+    textVerticalSpacing: 2
+  }
+  const dataLineHeight = dataLineProps.fontSize + dataLineProps.lineSolidWidth + dataLineProps.textVerticalSpacing + dataLineProps.paddingBottom
+
+  // Instance
   const app = new Application({
     width,
     height,
@@ -46,33 +49,47 @@ export default function createTimeLine(props) {
     backgroundAlpha: 0.02
   })
 
-  console.log(list);
-
-  const dateline = new DateLine({
+  const dateLine = new DateLine({
     startTime,
     endTime,
-    baseX: x,
-    baseY: y,
+    baseX,
+    baseY,
     baseWidth: width,
-    baseHeight: height
+    baseHeight: height,
+    ...dataLineProps
   })
 
-  app.stage.addChild(dateline.container)
+  const eventChart = new EventChart({
+    baseX,
+    baseY: baseY + dataLineHeight,
+    baseWidth: width,
+    baseHeight: height,
+  })
 
-  dateline.create()
+  // Add Stage
+  app.stage.addChild(dateLine.container)
+  app.stage.addChild(eventChart.container)
 
+  // Create Stage
+  dateLine.create()
+  eventChart.create()
+
+  // Add Ticker
   let time = 0
   app.ticker.add(() => {
     requestAnimationFrame((_time) => {
       const t = _time - time
       time = _time
       // 所有要進行動畫的元素
-      dateline.update(t)
+      dateLine.update(t)
+      eventChart.update(t)
     })
   })
 
   return {
     app,
-    dateline
+    dateLine,
+    eventChart,
+    collection
   }
 }

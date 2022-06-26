@@ -8,11 +8,10 @@ import {
   getTextWidth,
   getEndPointByTrigonometric
 } from '@base/utils'
-import BaseGraphics from './base-graphics'
 import {
   FontFamily,
-  FontSize,
 } from '@base/enums'
+import BaseGraphics from './base-graphics'
 
 export default class DateLine extends BaseGraphics {
   constructor(args) {
@@ -23,48 +22,42 @@ export default class DateLine extends BaseGraphics {
       baseX,
       baseY,
       baseWidth,
-      baseHeight
+      baseHeight,
+      fontSize,
+      lineSolidWidth,
+      textHorizontalSpacing,
+      textVerticalSpacing
     } = args;
 
-    this.startTime = startTime;
-    this.endTime = endTime;
     this.baseX = baseX;
     this.baseY = baseY;
     this.baseWidth = baseWidth;
     this.baseHeight = baseHeight;
+    this.fontSize = fontSize;
+    this.lineSolidWidth = lineSolidWidth
 
-    /** @enum {string} */
-    const TextWeight = '400'
-
-    this.arrowSpacing = 16
-    this.lineSolidWidth = 1
+    this.textHorizontalSpacing = textHorizontalSpacing
+    this.textVerticalSpacing = textVerticalSpacing
 
     // Computed
-    this.lineBaseY = this.baseY + FontSize.SMALL + this.lineSolidWidth
+    this.lineBaseY = this.baseY + this.fontSize + this.lineSolidWidth + this.textVerticalSpacing
     this.lineWidth = this.baseWidth - this.baseX * 2
 
     // Children
     // Start Time Text
-    const startTimeText = dateFormat(startTime, 'YYYY/MM/DD')
-    this.startTimeText = new Text(startTimeText, {
-      fontWeight: TextWeight,
+    this.startTimeText = new Text('', {
+      fontWeight: '400',
       fontFamily: FontFamily.SANS_SERIF,
-      fontSize: FontSize.SMALL,
-      align: 'left',
+      fontSize: this.fontSize,
     })
-    this.startTimeText.x = this.baseX + this.arrowSpacing
-    this.startTimeText.y = this.baseY
+    this.setStartTime(startTime)
     // End Time Text
-    const endTimeText = dateFormat(endTime, 'YYYY/MM/DD')
-    const endTimeTextWidth = getTextWidth(endTimeText, `${TextWeight} ${FontSize.SMALL}px ${FontFamily.SANS_SERIF}`)
-    this.endTimeText = new Text(endTimeText, {
-      fontWeight: TextWeight,
+    this.endTimeText = new Text('', {
+      fontWeight: '400',
       fontFamily: FontFamily.SANS_SERIF,
-      fontSize: FontSize.SMALL,
-      align: 'left',
+      fontSize: this.fontSize,
     })
-    this.endTimeText.x = this.baseX + this.lineWidth - endTimeTextWidth - this.arrowSpacing
-    this.endTimeText.y = this.baseY
+    this.setEndTime(endTime)
     // Center Line
     this.centerLine = {
       current: new Graphics(),
@@ -76,10 +69,29 @@ export default class DateLine extends BaseGraphics {
       timingFunction: easeInSine
     }
 
-    this.children = [this.centerLine.current, this.startTimeText, this.endTimeText]
-    this.container.addChild(...this.children)
+    this.children.push(this.centerLine.current, this.startTimeText, this.endTimeText)
   }
 
+  /**
+   * @param {number} time
+   */
+  setStartTime(time) {
+    this.startTime = time
+    this.startTimeText.text = dateFormat(time, 'YYYY/MM/DD')
+    this.startTimeText.x = this.baseX + this.textHorizontalSpacing
+    this.startTimeText.y = this.baseY
+  }
+
+  /**
+   * @param {number} time
+   */
+  setEndTime(time) {
+    this.endTime = time
+    this.endTimeText.text = dateFormat(time, 'YYYY/MM/DD')
+    const endTimeTextWidth = getTextWidth(this.endTimeText.text, `400 ${this.fontSize}px ${FontFamily.SANS_SERIF}`)
+    this.endTimeText.x = this.baseX + this.lineWidth - endTimeTextWidth - this.textHorizontalSpacing
+    this.endTimeText.y = this.baseY
+  }
 
   drawArrow() {
     const current = this.centerLine.current

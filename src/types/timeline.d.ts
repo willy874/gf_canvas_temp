@@ -5,7 +5,13 @@ interface TimelineProps {
   endTime: number
   x: number
   y: number
-  list: TimelineModel[]
+  list: EventModel[]
 }
 
-interface TimelineModel {}
+interface EventModel {
+  id: number
+  startTime: number
+  endTime: number
+  title: string
+  type: string
+}
