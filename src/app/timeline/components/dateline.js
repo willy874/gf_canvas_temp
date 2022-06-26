@@ -5,7 +5,8 @@ import {
 import {
   dateFormat,
   easeInSine,
-  getTextWidth
+  getTextWidth,
+  getEndPointByTrigonometric
 } from '@base/utils'
 import BaseGraphics from './base-graphics'
 import {
@@ -84,9 +85,11 @@ export default class DateLine extends BaseGraphics {
     const current = this.centerLine.current
     current.lineStyle(this.lineSolidWidth)
     current.moveTo(this.baseX, this.lineBaseY)
-    current.lineTo(this.baseX + 10, this.lineBaseY - 5)
+    const leftPoint = getEndPointByTrigonometric(this.baseX, this.lineBaseY, -35, 15)
+    current.lineTo(leftPoint.x, leftPoint.y)
     current.moveTo(this.baseX + this.lineWidth, this.lineBaseY)
-    current.lineTo(this.baseX + this.lineWidth - 10, this.lineBaseY - 5)
+    const rightPoint = getEndPointByTrigonometric(this.baseX + this.lineWidth, this.lineBaseY, -145, 15)
+    current.lineTo(rightPoint.x, rightPoint.y)
     this.centerLine.target = this.lineBaseY + this.lineWidth / 2
   }
 
