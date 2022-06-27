@@ -7,6 +7,7 @@ import {
 import {
   FontSize,
 } from '@base/enums'
+
 import DateLine from './components/dateline'
 import EventChart from './components/event-chart'
 
@@ -60,10 +61,13 @@ export default function createTimeLine(options) {
   })
 
   const eventChart = new EventChart({
+    startTime,
+    endTime,
     baseX,
     baseY: baseY + dataLineHeight,
     baseWidth: width,
     baseHeight: height,
+    collection,
   })
 
   // Add Stage

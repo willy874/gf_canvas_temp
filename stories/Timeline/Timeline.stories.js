@@ -54,6 +54,24 @@ const list = [{
   endTime: dayjs('2022/04/25').valueOf(),
   title: '這是攻擊3',
   type: 'Attack'
+}, {
+  id: 4,
+  startTime: dayjs('2022/04/21').valueOf(),
+  endTime: dayjs('2022/05/30').valueOf(),
+  title: '這是攻擊4',
+  type: 'Attack'
+}, {
+  id: 5,
+  startTime: dayjs('2022/04/05').valueOf(),
+  endTime: dayjs('2022/05/5').valueOf(),
+  title: '這是攻擊5',
+  type: 'Activity'
+}, {
+  id: 6,
+  startTime: dayjs('2022/05/05').valueOf(),
+  endTime: dayjs('2022/05/25').valueOf(),
+  title: '這是攻擊6',
+  type: 'Maintenance'
 }]
 
 export const AutoTime = Template.bind({});

@@ -2,23 +2,28 @@ import {
   Container,
   Graphics
 } from '@base/pixi';
-
-/**
- * @typedef {Object} GraphicsInfo
- * @property {Graphics} current
- * @property {number} status
- * @property {number} target
- * @property {number} origin
- * @property {number} duration
- * @property {number} time
- * @property {(x: number) => number} timingFunction
- */
-
+import {
+  easeInSine
+} from '@base/utils';
 
 export default class BaseGraphics {
   constructor() {
     this.container = new Container()
     this.children = []
+  }
+
+  /**
+   * @param {GraphicsInfo} graphics
+   * @param {number} target 
+   * @param {number} duration
+   * @param {(t: number) => number} duration 
+   */
+  setTarget(graphics, target, duration, timingFunction = easeInSine) {
+    graphics.origin = graphics.status
+    graphics.target = target
+    if (duration) graphics.duration = duration
+    graphics.time = 0
+    graphics.timingFunction = timingFunction
   }
 
   /**
@@ -41,6 +46,7 @@ export default class BaseGraphics {
     } else {
       if (status !== target) {
         graphics.status = target
+        graphics.origin = target
       }
     }
   }

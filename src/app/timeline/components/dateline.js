@@ -1,10 +1,8 @@
 import {
-  Graphics,
   Text
 } from '@base/pixi';
 import {
   dateFormat,
-  easeInSine,
   getTextWidth,
   getEndPointByTrigonometric
 } from '@base/utils'
@@ -12,6 +10,7 @@ import {
   FontFamily,
 } from '@base/enums'
 import BaseGraphics from './base-graphics'
+import DynamicProperties from './dynamic-properties'
 
 export default class DateLine extends BaseGraphics {
   constructor(args) {
@@ -59,15 +58,10 @@ export default class DateLine extends BaseGraphics {
     })
     this.setEndTime(endTime)
     // Center Line
-    this.centerLine = {
-      current: new Graphics(),
-      status: 0,
-      target: 0,
+    this.centerLine = new DynamicProperties({
       origin: this.baseX,
       duration: 1000,
-      time: 0,
-      timingFunction: easeInSine
-    }
+    })
 
     this.children.push(this.centerLine.current, this.startTimeText, this.endTimeText)
   }
@@ -118,7 +112,7 @@ export default class DateLine extends BaseGraphics {
    * @param {number} t 
    */
   updateData(t) {
-    this.updateGraphics(this.centerLine, t)
+    this.centerLine.updateGraphics(t)
   }
 
   draw() {

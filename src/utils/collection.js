@@ -1,6 +1,12 @@
+/**
+ * @template T
+ * @implements {ICollection<T>}
+ */
 export class Collection {
   constructor(data = {}, primaryKey = 'id') {
+    /** @type {Record<PrimaryKeyType ,T>} */
     this.current = {};
+    /** @type {PrimaryKeyType} */
     this.primaryKey = primaryKey;
     for (const key in data) {
       this.current[key] = data[key];

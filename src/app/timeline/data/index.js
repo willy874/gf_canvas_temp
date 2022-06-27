@@ -2,7 +2,14 @@ import {
   Collection
 } from '@base/utils';
 
+/**
+ * @template {EventModel} T
+ * @extends {Collection<T>}
+ */
 export class EventCollection extends Collection {
+  /**
+   * @param {T[]} args 
+   */
   constructor(args = []) {
     super();
     args.forEach((p) => {
