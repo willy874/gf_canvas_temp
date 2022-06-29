@@ -4,7 +4,7 @@ import {
 import dayjs from 'dayjs';
 
 export default {
-  title: 'Example/Timeline',
+  title: 'Library/Timeline',
   argTypes: {
     width: {
       control: 'number'
@@ -72,6 +72,18 @@ const list = [{
   endTime: dayjs('2022/05/25').valueOf(),
   title: '這是攻擊6',
   type: 'Maintenance'
+}, {
+  id: 7,
+  startTime: dayjs('2022/03/20').valueOf(),
+  endTime: dayjs('2022/04/10').valueOf(),
+  title: '這是部署1',
+  type: 'Deployment'
+}, {
+  id: 8,
+  startTime: dayjs('2022/6/20').valueOf(),
+  endTime: dayjs('2022/07/10').valueOf(),
+  title: '這是部署2',
+  type: 'Deployment'
 }]
 
 export const AutoTime = Template.bind({});

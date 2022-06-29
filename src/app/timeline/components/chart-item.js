@@ -20,7 +20,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
       baseHeight,
       model,
       color,
-      timeMatrix
+      modelDataCollection
     } = args;
 
     this.model = model
@@ -31,7 +31,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
     this.baseWidth = baseWidth
     this.baseHeight = baseHeight
     this.color = color
-    this.timeMatrix = timeMatrix
+    this.modelDataCollection = modelDataCollection
     this.paddingBottom = 4
 
     const effectWidth = this.baseWidth - this.baseX * 2
@@ -47,7 +47,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
     })
     this.heightInfo = new DynamicProperties({
       current: this.graphics,
-      status: 30,
+      status: 5,
     })
     this.leftInfo = new DynamicProperties({
       current: this.graphics,
@@ -58,6 +58,15 @@ export default class TimeLimeChartItem extends BaseGraphics {
       status: this.getChartTop(),
     })
     this.children.push(this.graphics)
+  }
+
+  getCurrentBoxInfo() {
+    return {
+      top: this.topInfo.status,
+      left: this.leftInfo.status,
+      width: this.widthInfo.status,
+      height: this.heightInfo.status,
+    }
   }
 
   getChartWidth() {
@@ -71,7 +80,8 @@ export default class TimeLimeChartItem extends BaseGraphics {
   }
 
   getChartTop() {
-    const index = this.timeMatrix.map(p => p.some(t => t === this.model.startTime) && p.some(t => t === this.model.endTime)).indexOf(true)
+    const modelData = this.modelDataCollection.get(this.model.id)
+    const index = modelData.row
     return this.baseY + index * this.heightInfo.status + index * this.paddingBottom
   }
 

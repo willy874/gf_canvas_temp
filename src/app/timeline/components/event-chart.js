@@ -3,17 +3,13 @@ import TimeLimeChartItem from './chart-item'
 import {
   Collection,
 } from '@base/utils';
-import {
-  uniq,
-  flatten
-} from '@base/utils/lodash';
-
+// import dayjs from 'dayjs';
 /**
  * @template T
  * @typedef {import('../data').EventCollection<T>} EventCollection
  */
 
-const colors = [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF, 0xA0D0F5]
+const colors = [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF]
 
 export default class EventChart extends BaseGraphics {
   constructor(args) {
@@ -25,9 +21,8 @@ export default class EventChart extends BaseGraphics {
       baseY,
       baseWidth,
       baseHeight,
-      collection
+      collection,
     } = args;
-
     this.startTime = startTime;
     this.endTime = endTime;
     this.baseX = baseX;
@@ -38,27 +33,20 @@ export default class EventChart extends BaseGraphics {
     this.collection = collection;
     /** @type {Collection<TimeLimeChartItem>} */
     this.chartItemCollection = new Collection()
-
-    this.typeList = uniq(this.collection.all().map(model => model.type))
-    const timeTypeMatrix = this.typeList.map((type) => {
-      const timeMatrix = []
-      this.collection.all().filter(p => p.type === type).sort((s, e) => s.startTime - e.startTime).forEach(model => {
-        this.setTimeMatrix(timeMatrix, model.startTime, model.endTime)
-      })
-      return timeMatrix
-    })
-    this.timeMatrix = flatten(timeTypeMatrix)
-    console.log('timeMatrix', this.timeMatrix);
+    /** @type {Collection<EventModel[]>} */
+    this.typeCollection = this.getTypeList()
+    this.typeList = this.typeCollection.keys()
+    this.modelDataCollection = this.getModelDataCollection()
     this.collection.all().forEach(model => {
       this.chartItemCollection.set(model.id, new TimeLimeChartItem({
         ...args,
         model,
         typeList: this.typeList,
-        timeMatrix: this.timeMatrix,
+        modelDataCollection: this.modelDataCollection,
         color: colors[this.typeList.indexOf(model.type) % colors.length],
       }))
     })
-
+    // console.log(this.chartItemCollection.all().map(p => p.getCurrentBoxInfo()));
 
     /** @type {number[]} */
     this.effectList = this.getEffectList()
@@ -67,22 +55,96 @@ export default class EventChart extends BaseGraphics {
     this.chartItemCollection.all().forEach(chart => chart.create())
   }
 
-  setTimeMatrix(matrix, startTime, endTime) {
-    let column = 0
-    for (let index = 0; index < matrix.length + 1; index++) {
-      if (matrix[column]) {
-        const copy = matrix[column].map(p => p)
-        const last = copy.pop()
-        if (startTime >= last) {
+  getTypeList() {
+    /** @type {Collection<EventModel[]>} */
+    const types = new Collection()
+    this.collection.all().forEach(model => {
+      if (types.has(model.type)) {
+        types.get(model.type).push(model)
+      } else {
+        types.set(model.type, [model])
+      }
+    })
+    return types
+  }
+
+  getModelDataCollection() {
+    const typeCollection = {}
+    let lastRow = 0
+    this.typeList.forEach((type) => {
+      const children = this.typeCollection.get(type)
+      const matrix = this.getTimeMatrix(children)
+      typeCollection[type] = {
+        sort: children.map(p => p.id),
+        matrix,
+        lastRow,
+      }
+      lastRow += matrix.length
+    })
+    const indexCollection = new Collection()
+    this.collection.all().forEach(model => {
+      const typeData = typeCollection[model.type]
+      const index = typeData.matrix.map(p => p.some(t => t === model.startTime) && p.some(t => t === model.endTime)).indexOf(true)
+      indexCollection.set(model.id, {
+        ...model,
+        row: typeData.lastRow + index,
+        sort: typeData.sort,
+        matrix: typeData.matrix
+      })
+    })
+    return indexCollection
+  }
+
+  getTimeMatrix(list = []) {
+    const matrix = []
+    list.forEach(model => {
+      const times = [model.startTime, model.endTime]
+      let column = 0
+      let isLoop = true
+      while (isLoop) {
+        if (matrix[column]) {
+          let i = 0
+          const length = matrix[column].length
+          while (i < matrix[column].length) {
+            const t = matrix[column][i]
+            if (i % 2 === 0 && model.endTime <= t) {
+              if (i === 0) {
+                matrix[column].unshift(...times)
+                break
+              } else {
+                const pt = matrix[column][i - 1]
+                if (model.startTime >= pt) {
+                  matrix[column].splice(i, 0, ...times)
+                  break
+                }
+              }
+            }
+            if (i % 2 === 1 && model.startTime >= t) {
+              if (i === matrix[column].length - 1) {
+                matrix[column].push(...times)
+                break
+              } else {
+                const nt = matrix[column][i + 1]
+                if (model.endTime >= nt) {
+                  matrix[column].splice(i + 1, 0, ...times)
+                  break
+                }
+              }
+            }
+            i++
+          }
+          if (length !== matrix[column].length) {
+            isLoop = false
+          }
+        } else {
+          matrix[column] = times
+          isLoop = false
           break
         }
-      } else {
-        matrix[column] = []
-        break
+        column++
       }
-      column++
-    }
-    matrix[column].push(startTime, endTime)
+    })
+    return matrix
   }
 
   getEffectList() {

@@ -31,7 +31,7 @@ export default function createTimeLine(options) {
   const baseX = options.x
   const baseY = options.y
   const startTime = options.startTime || collection.getMinStartTime()
-  const endTime = options.startTime || collection.getMaxEndTime()
+  const endTime = options.endTime || collection.getMaxEndTime()
 
   const dataLineProps = {
     fontSize: FontSize.SMALL,

@@ -13,6 +13,10 @@ export class Collection {
     }
   }
 
+  keys() {
+    return Object.keys(this.current)
+  }
+
   all() {
     return Object.values(this.current);
   }
@@ -27,6 +31,10 @@ export class Collection {
 
   set(key, value) {
     this.current[key] = value;
+  }
+
+  has(key) {
+    return Boolean(this.current[key])
   }
 
   delete(key) {
