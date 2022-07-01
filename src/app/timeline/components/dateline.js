@@ -4,7 +4,6 @@ import {
 import {
   dateFormat,
   getTextWidth,
-  getEndPointByTrigonometric
 } from '@base/utils'
 import {
   FontFamily,
@@ -14,7 +13,7 @@ import DynamicProperties from './dynamic-properties'
 
 export default class DateLine extends BaseGraphics {
   constructor(args) {
-    super()
+    super(args)
     const {
       startTime,
       endTime,
@@ -25,7 +24,8 @@ export default class DateLine extends BaseGraphics {
       fontSize,
       lineSolidWidth,
       textHorizontalSpacing,
-      textVerticalSpacing
+      textVerticalSpacing,
+      paddingBottom
     } = args;
 
     this.baseX = baseX;
@@ -34,9 +34,9 @@ export default class DateLine extends BaseGraphics {
     this.baseHeight = baseHeight;
     this.fontSize = fontSize;
     this.lineSolidWidth = lineSolidWidth
-
     this.textHorizontalSpacing = textHorizontalSpacing
     this.textVerticalSpacing = textVerticalSpacing
+    this.height = fontSize + lineSolidWidth + textVerticalSpacing + paddingBottom
 
     // Computed
     this.lineBaseY = this.baseY + this.fontSize + this.lineSolidWidth + this.textVerticalSpacing
@@ -63,7 +63,8 @@ export default class DateLine extends BaseGraphics {
       duration: 1000,
     })
 
-    this.children.push(this.centerLine.current, this.startTimeText, this.endTimeText)
+    const children = [this.centerLine.current, this.startTimeText, this.endTimeText]
+    this.create(children)
   }
 
   /**
@@ -88,30 +89,24 @@ export default class DateLine extends BaseGraphics {
   }
 
   drawArrow() {
-    const current = this.centerLine.current
-    current.lineStyle(this.lineSolidWidth)
-    current.moveTo(this.baseX, this.lineBaseY)
-    const leftPoint = getEndPointByTrigonometric(this.baseX, this.lineBaseY, -35, 15)
-    current.lineTo(leftPoint.x, leftPoint.y)
-    current.moveTo(this.baseX + this.lineWidth, this.lineBaseY)
-    const rightPoint = getEndPointByTrigonometric(this.baseX + this.lineWidth, this.lineBaseY, -145, 15)
-    current.lineTo(rightPoint.x, rightPoint.y)
+    const graphics = this.centerLine.current
+    graphics.lineStyle(this.lineSolidWidth)
     this.centerLine.target = this.lineBaseY + this.lineWidth / 2
   }
 
   drawArrowLine() {
-    const current = this.centerLine.current
-    current.lineStyle(this.lineSolidWidth)
-    current.moveTo(this.baseX, this.lineBaseY)
-    current.lineTo(this.centerLine.status, this.lineBaseY)
-    current.moveTo(this.baseX + this.lineWidth, this.lineBaseY)
-    current.lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
+    const graphics = this.centerLine.current
+    graphics.lineStyle(this.lineSolidWidth)
+    graphics.moveTo(this.baseX, this.lineBaseY)
+    graphics.lineTo(this.centerLine.status, this.lineBaseY)
+    graphics.moveTo(this.baseX + this.lineWidth, this.lineBaseY)
+    graphics.lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
   }
 
   /**
    * @param {number} t 
    */
-  updateData(t) {
+  update(t) {
     this.centerLine.updateGraphics(t)
   }
 

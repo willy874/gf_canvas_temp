@@ -7,9 +7,28 @@ import {
 } from '@base/utils';
 
 export default class BaseGraphics {
-  constructor() {
+  constructor(args) {
+    /** @private */
+    this._app = args.app;
+
+    /** 
+     * @private
+     * @type {DisplayObject[]}
+     */
+    this._containers = [];
+
+    /** 
+     * 
+     * @public
+     * @type {BaseGraphics[]}
+     */
+    this.children = [];
+
+    /** 
+     * @public 
+     * @type {Container}
+     */
     this.container = new Container()
-    this.children = []
   }
 
   /**
@@ -55,27 +74,53 @@ export default class BaseGraphics {
   /**
    * @param {number} t 
    */
-  updateData(t) {}
+  update(t) {}
 
   draw() {}
 
-  create() {
-    if (this.children.length) {
-      this.container.addChild(...this.children)
+  /**
+   * @param {DisplayObject[]} children 
+   */
+  create(children = []) {
+    this._containers.push(...children)
+    if (this._containers.length) {
+      this.container.addChild(...this._containers)
+      this._app.stage.addChild(this.container)
     }
     this.draw()
   }
 
   /**
+   * @param {DisplayObject[]} children 
+   */
+  setChild(children = []) {
+    this._containers = children
+    this.containerUpdate()
+  }
+
+  containerUpdate() {
+    this._app.stage.removeChild(this.container)
+    this.container = new Container()
+    this.container.addChild(...this._containers)
+  }
+
+  remove() {
+    this._app.stage.removeChild(this.container)
+  }
+
+  /**
    * @param {number} t 
    */
-  update(t) {
+  _update(t) {
     this.container.children.forEach(child => {
       if (child instanceof Graphics) {
         child.clear()
       }
     })
-    this.updateData(t)
+    this.children.forEach(child => {
+      child._update(t)
+    })
+    this.update(t)
     this.draw()
   }
 }

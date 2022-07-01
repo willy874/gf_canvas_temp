@@ -4,16 +4,12 @@ import {
   Collection,
 } from '@base/utils';
 // import dayjs from 'dayjs';
-/**
- * @template T
- * @typedef {import('../data').EventCollection<T>} EventCollection
- */
 
 const colors = [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF]
 
 export default class EventChart extends BaseGraphics {
   constructor(args) {
-    super()
+    super(args)
     const {
       startTime,
       endTime,
@@ -29,11 +25,11 @@ export default class EventChart extends BaseGraphics {
     this.baseY = baseY;
     this.baseWidth = baseWidth;
     this.baseHeight = baseHeight;
-    /** @type {EventCollection<EventModel>} */
+    /** @type {IEventCollection<IEventModel>} */
     this.collection = collection;
-    /** @type {Collection<TimeLimeChartItem>} */
+    /** @type {ICollection<TimeLimeChartItem>} */
     this.chartItemCollection = new Collection()
-    /** @type {Collection<EventModel[]>} */
+    /** @type {ICollection<IEventModel[]>} */
     this.typeCollection = this.getTypeList()
     this.typeList = this.typeCollection.keys()
     this.modelDataCollection = this.getModelDataCollection()
@@ -46,17 +42,17 @@ export default class EventChart extends BaseGraphics {
         color: colors[this.typeList.indexOf(model.type) % colors.length],
       }))
     })
-    // console.log(this.chartItemCollection.all().map(p => p.getCurrentBoxInfo()));
 
     /** @type {number[]} */
     this.effectList = this.getEffectList()
 
-    this.children.push(...this.chartItemCollection.all().map(chart => chart.container))
-    this.chartItemCollection.all().forEach(chart => chart.create())
+    const children = this.chartItemCollection.all()
+    this.create(children.map(chart => chart.container))
+    this.children.push(...children)
   }
 
   getTypeList() {
-    /** @type {Collection<EventModel[]>} */
+    /** @type {ICollection<IEventModel[]>} */
     const types = new Collection()
     this.collection.all().forEach(model => {
       if (types.has(model.type)) {
@@ -149,16 +145,5 @@ export default class EventChart extends BaseGraphics {
 
   getEffectList() {
     return this.collection.all().filter(p => p.startTime < this.endTime || p.endTime > this.startTime).map(p => p.id)
-  }
-
-  /**
-   * @param {number} t 
-   */
-  updateData(t) {
-    this.chartItemCollection.all().forEach(chart => chart.update(t))
-  }
-
-  draw() {
-    this.chartItemCollection.all().forEach(chart => chart.draw())
   }
 }

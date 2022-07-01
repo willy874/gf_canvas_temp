@@ -22,7 +22,12 @@ interface TimeLimeChartItemInfo extends GraphicsInfo {
   model: EventModel
 }
 
-interface EventModel {
+interface IEventCollection<T> extends ICollection<T> {
+  getMinStartTime: () => number
+  getMaxEndTime: () => number
+}
+
+interface IEventModel {
   id: number
   startTime: number
   endTime: number
@@ -35,10 +40,12 @@ type PrimaryKeyType = string | number
 class ICollection<T> {
   current: Record<PrimaryKeyType, T>
   primaryKey: PrimaryKeyType
+  has(key: PrimaryKeyType): boolean
+  keys(): string[]
   all(): T[]
   clear(): void
-  get(key: string): T
-  set(key: string, value: any): void
-  delete(key: string): void
-  getList(sort: Array<number | string | T>): T[]
+  get(key: PrimaryKeyType): T
+  set(key: PrimaryKeyType, value: any): void
+  delete(key: PrimaryKeyType): void
+  getList(sort: Array<PrimaryKeyType | T>): T[]
 }

@@ -10,7 +10,7 @@ import DynamicProperties from './dynamic-properties'
 
 export default class TimeLimeChartItem extends BaseGraphics {
   constructor(args) {
-    super()
+    super(args)
     const {
       startTime,
       endTime,
@@ -57,7 +57,8 @@ export default class TimeLimeChartItem extends BaseGraphics {
       current: this.graphics,
       status: this.getChartTop(),
     })
-    this.children.push(this.graphics)
+    const children = [this.graphics]
+    this.create(children)
   }
 
   getCurrentBoxInfo() {
@@ -94,7 +95,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
   /**
    * @param {number} t 
    */
-  updateData(t) {
+  update(t) {
     this.widthInfo.updateGraphics(t)
   }
 
