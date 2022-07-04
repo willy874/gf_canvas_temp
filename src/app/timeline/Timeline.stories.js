@@ -1,6 +1,9 @@
 import {
   TimeLine as createTimeline
 } from '@base/app'
+import {
+  TimeUnit
+} from '@base/enums'
 import dayjs from 'dayjs';
 
 export default {
@@ -12,11 +15,11 @@ export default {
     height: {
       control: 'number'
     },
-    startTime: {
-      control: 'number'
-    },
-    endTime: {
-      control: 'number'
+    unit: {
+      options: [TimeUnit.HALF_HOUR, TimeUnit.HOUR, TimeUnit.HOUR12, TimeUnit.DAY, TimeUnit.DAY3, TimeUnit.WEEK, TimeUnit.HALF_MONTH, TimeUnit.MONTH, TimeUnit.QUARTER],
+      control: {
+        type: 'select'
+      }
     },
     x: {
       control: 'number'
@@ -91,18 +94,7 @@ AutoTime.args = {
   width: 1000,
   height: 500,
   x: 20,
-  y: 40,
-  list
-};
-
-
-export const FixedTime = Template.bind({});
-FixedTime.args = {
-  width: 1000,
-  height: 500,
-  startTime: Date.now() - 1000 * 60 * 60 * 24 * 90,
-  endTime: Date.now(),
-  x: 20,
-  y: 40,
+  y: 20,
+  unit: TimeUnit.WEEK,
   list
 };

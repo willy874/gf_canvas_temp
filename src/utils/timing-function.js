@@ -3,10 +3,12 @@
  * 緩動函數
  */
 
+/** @type {TimingFunction} */
 export function easeInSine(x) {
   return 1 - Math.cos((x * Math.PI) / 2);
 }
 
+/** @type {TimingFunction} */
 export function easeOutElastic(x) {
   const c4 = (2 * Math.PI) / 3
   const ease = x === 0 ?
