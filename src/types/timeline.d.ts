@@ -8,14 +8,17 @@ interface TimelineProps {
   list: EventModel[]
 }
 
-interface GraphicsInfo {
-  current: import('pixi.js').Graphics
+type TimingFunction = (x: number) => number
+
+interface IDynamicProperties {
   status: number
   target: number
   origin: number
   duration: number
   time: number
-  timingFunction: (x: number) => number
+  timingFunction: TimingFunction
+  toTarget: (target: number, duration: number, timingFunction?: TimingFunction) => Promise<IDynamicProperties>
+  updateDate: (t: number) => void
 }
 
 interface TimeLimeChartItemInfo extends GraphicsInfo {

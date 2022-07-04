@@ -5,17 +5,17 @@ import {
   EventCollection
 } from '../data'
 import {
-  FontSize,
+  FontSize
 } from '@base/enums'
-import dayjs from 'dayjs';
 
 import DateLine from './dateline'
 import EventChart from './event-chart'
 
+// * @property {number} startTime
+// * @property {number} endTime
 /**
  * @typedef {Object} TimelineApplicationOptions
- * @property {number} startTime
- * @property {number} endTime
+ * @property {number | string} unit
  * @property {number} width
  * @property {number} height
  * @property {number} x
@@ -27,8 +27,7 @@ export default class TimelineApplication {
   constructor(args = {}) {
     /** @type {TimelineApplicationOptions} */
     this.options = {
-      startTime: 0,
-      endTime: 0,
+      unit: 0,
       width: 0,
       height: 0,
       x: 0,
@@ -36,6 +35,7 @@ export default class TimelineApplication {
       collection: null
     }
     this.setOptions(args)
+
 
     this.app = new Application({
       width: this.options.width,
@@ -46,29 +46,33 @@ export default class TimelineApplication {
 
     const dateLine = new DateLine({
       app: this.app,
-      startTime: this.options.startTime,
-      endTime: this.options.endTime,
-      baseX: this.options.x,
-      baseY: this.options.y,
-      baseWidth: this.options.width,
-      baseHeight: this.options.height,
+      unit: this.options.unit,
+      translateX: 0,
+      translateY: 0,
+      x: this.options.x,
+      y: this.options.y,
+      canvasWidth: this.options.width,
+      canvasHeight: this.options.height,
       fontSize: FontSize.SMALL,
       lineSolidWidth: 1,
-      paddingBottom: 20,
-      textHorizontalSpacing: 24,
-      textVerticalSpacing: 2
+      textPaddingX: 2,
+      textPaddingY: 2,
     })
 
     const eventChart = new EventChart({
       app: this.app,
-      startTime: this.options.startTime,
-      endTime: this.options.endTime,
-      baseX: this.options.x,
-      baseY: this.options.y + dateLine.height,
-      baseWidth: this.options.width,
-      baseHeight: this.options.height,
+      startTime: dateLine.startTime,
+      endTime: dateLine.endTime,
+      startX: dateLine.baseStartX,
+      endX: dateLine.baseEndX,
+      x: this.options.x,
+      y: dateLine.y + dateLine.height,
+      canvasWidth: this.options.width,
+      canvasHeight: this.options.height,
       collection: this.options.collection,
     })
+
+    this.app.stage.addChild(dateLine, eventChart)
 
     this.useTickerEvent((t) => {
       dateLine._update(t)
@@ -78,8 +82,7 @@ export default class TimelineApplication {
 
   setOptions(args) {
     const collection = new EventCollection(args.list)
-    this.options.startTime = dayjs(args.startTime || collection.getMinStartTime()).valueOf()
-    this.options.endTime = dayjs(args.endTime || collection.getMaxEndTime()).valueOf()
+    this.options.unit = args.unit
     this.options.width = args.width
     this.options.height = args.height
     this.options.x = args.x

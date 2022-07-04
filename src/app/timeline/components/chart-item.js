@@ -4,39 +4,38 @@ import {
 import {
   easeInSine
 } from '@base/utils';
-import BaseGraphics from './base-graphics'
+import BaseContainer from './base-container'
 import DynamicProperties from './dynamic-properties'
 
 
-export default class TimeLimeChartItem extends BaseGraphics {
+export default class TimeLimeChartItem extends BaseContainer {
   constructor(args) {
     super(args)
     const {
       startTime,
       endTime,
-      baseX,
-      baseY,
+      x,
+      y,
       baseWidth,
       baseHeight,
       model,
       color,
-      modelDataCollection
+      timeMatrix,
+      startX,
+      endX,
     } = args;
 
     this.model = model
     this.startTime = startTime
     this.endTime = endTime
-    this.baseX = baseX
-    this.baseY = baseY
+    this.x = x
+    this.y = y
     this.baseWidth = baseWidth
     this.baseHeight = baseHeight
     this.color = color
-    this.modelDataCollection = modelDataCollection
+    this.timeMatrix = timeMatrix
     this.paddingBottom = 4
-
-    const effectWidth = this.baseWidth - this.baseX * 2
-    const rangeTime = this.endTime - this.startTime
-    this.basePixelTime = rangeTime / effectWidth
+    this.basePixelTime = (endTime - startTime) / (endX - startX)
 
     this.graphics = new Graphics()
     this.widthInfo = new DynamicProperties({
@@ -47,7 +46,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
     })
     this.heightInfo = new DynamicProperties({
       current: this.graphics,
-      status: 5,
+      status: 2,
     })
     this.leftInfo = new DynamicProperties({
       current: this.graphics,
@@ -57,8 +56,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
       current: this.graphics,
       status: this.getChartTop(),
     })
-    const children = [this.graphics]
-    this.create(children)
+    this.addChild(this.graphics)
   }
 
   getCurrentBoxInfo() {
@@ -77,13 +75,13 @@ export default class TimeLimeChartItem extends BaseGraphics {
 
   getChartLeft() {
     const rangeTime = this.model.startTime - this.startTime
-    return this.baseX + Math.floor(rangeTime / this.basePixelTime)
+    return Math.floor(rangeTime / this.basePixelTime)
   }
 
   getChartTop() {
-    const modelData = this.modelDataCollection.get(this.model.id)
+    const modelData = this.timeMatrix.modelInfo.get(this.model.id)
     const index = modelData.row
-    return this.baseY + index * this.heightInfo.status + index * this.paddingBottom
+    return index * this.heightInfo.status + index * this.paddingBottom
   }
 
   drawChart() {
@@ -96,7 +94,7 @@ export default class TimeLimeChartItem extends BaseGraphics {
    * @param {number} t 
    */
   update(t) {
-    this.widthInfo.updateGraphics(t)
+    this.widthInfo.updateDate(t)
   }
 
   draw() {

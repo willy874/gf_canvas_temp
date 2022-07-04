@@ -1,54 +1,63 @@
-import BaseGraphics from './base-graphics'
+import BaseContainer from './base-container'
 import TimeLimeChartItem from './chart-item'
+import {
+  TimeMatrix
+} from '../data'
 import {
   Collection,
 } from '@base/utils';
-// import dayjs from 'dayjs';
+import {
+  Graphics,
+} from '@base/pixi';
 
 const colors = [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF]
 
-export default class EventChart extends BaseGraphics {
+export default class EventChart extends BaseContainer {
   constructor(args) {
     super(args)
     const {
       startTime,
       endTime,
-      baseX,
-      baseY,
-      baseWidth,
-      baseHeight,
+      x,
+      y,
+      canvasWidth,
+      canvasHeight,
       collection,
+      basePixelTime,
     } = args;
     this.startTime = startTime;
     this.endTime = endTime;
-    this.baseX = baseX;
-    this.baseY = baseY;
-    this.baseWidth = baseWidth;
-    this.baseHeight = baseHeight;
+    this.x = x;
+    this.y = y;
+    this.baseWidth = canvasWidth;
+    this.baseHeight = canvasHeight;
     /** @type {IEventCollection<IEventModel>} */
     this.collection = collection;
     /** @type {ICollection<TimeLimeChartItem>} */
     this.chartItemCollection = new Collection()
     /** @type {ICollection<IEventModel[]>} */
     this.typeCollection = this.getTypeList()
+    /** @type {string[]} */
     this.typeList = this.typeCollection.keys()
-    this.modelDataCollection = this.getModelDataCollection()
+    /** @type {TimeMatrix} */
+    this.timeMatrix = new TimeMatrix(this.typeList, this.collection.all())
     this.collection.all().forEach(model => {
       this.chartItemCollection.set(model.id, new TimeLimeChartItem({
         ...args,
         model,
         typeList: this.typeList,
-        modelDataCollection: this.modelDataCollection,
+        timeMatrix: this.timeMatrix,
         color: colors[this.typeList.indexOf(model.type) % colors.length],
+        basePixelTime,
       }))
     })
 
     /** @type {number[]} */
     this.effectList = this.getEffectList()
 
+    this.graphics = new Graphics()
     const children = this.chartItemCollection.all()
-    this.create(children.map(chart => chart.container))
-    this.children.push(...children)
+    this.addChild(...children)
   }
 
   getTypeList() {
@@ -62,85 +71,6 @@ export default class EventChart extends BaseGraphics {
       }
     })
     return types
-  }
-
-  getModelDataCollection() {
-    const typeCollection = {}
-    let lastRow = 0
-    this.typeList.forEach((type) => {
-      const children = this.typeCollection.get(type)
-      const matrix = this.getTimeMatrix(children)
-      typeCollection[type] = {
-        sort: children.map(p => p.id),
-        matrix,
-        lastRow,
-      }
-      lastRow += matrix.length
-    })
-    const indexCollection = new Collection()
-    this.collection.all().forEach(model => {
-      const typeData = typeCollection[model.type]
-      const index = typeData.matrix.map(p => p.some(t => t === model.startTime) && p.some(t => t === model.endTime)).indexOf(true)
-      indexCollection.set(model.id, {
-        ...model,
-        row: typeData.lastRow + index,
-        sort: typeData.sort,
-        matrix: typeData.matrix
-      })
-    })
-    return indexCollection
-  }
-
-  getTimeMatrix(list = []) {
-    const matrix = []
-    list.forEach(model => {
-      const times = [model.startTime, model.endTime]
-      let column = 0
-      let isLoop = true
-      while (isLoop) {
-        if (matrix[column]) {
-          let i = 0
-          const length = matrix[column].length
-          while (i < matrix[column].length) {
-            const t = matrix[column][i]
-            if (i % 2 === 0 && model.endTime <= t) {
-              if (i === 0) {
-                matrix[column].unshift(...times)
-                break
-              } else {
-                const pt = matrix[column][i - 1]
-                if (model.startTime >= pt) {
-                  matrix[column].splice(i, 0, ...times)
-                  break
-                }
-              }
-            }
-            if (i % 2 === 1 && model.startTime >= t) {
-              if (i === matrix[column].length - 1) {
-                matrix[column].push(...times)
-                break
-              } else {
-                const nt = matrix[column][i + 1]
-                if (model.endTime >= nt) {
-                  matrix[column].splice(i + 1, 0, ...times)
-                  break
-                }
-              }
-            }
-            i++
-          }
-          if (length !== matrix[column].length) {
-            isLoop = false
-          }
-        } else {
-          matrix[column] = times
-          isLoop = false
-          break
-        }
-        column++
-      }
-    })
-    return matrix
   }
 
   getEffectList() {

@@ -1,17 +1,13 @@
 import {
-  Graphics
-} from "@base/pixi";
-import {
   easeInSine
 } from '@base/utils';
 
 /**
- * @implements {GraphicsInfo}
+ * @implements {IDynamicProperties}
  */
 export default class DynamicProperties {
   constructor(args = {}) {
     const {
-      current,
       status,
       target,
       origin,
@@ -19,7 +15,6 @@ export default class DynamicProperties {
       time,
       timingFunction
     } = args;
-    this.current = current || new Graphics()
     this.status = status || 0
     this.target = target || 0
     this.origin = origin || 0
@@ -31,20 +26,24 @@ export default class DynamicProperties {
   /**
    * @param {number} target 
    * @param {number} duration
-   * @param {(t: number) => number} duration 
+   * @param {(t: number) => number} duration
+   * @returns {Promise<DynamicProperties>}
    */
-  setTarget(target, duration, timingFunction = easeInSine) {
-    this.origin = this.status
-    this.target = target
-    if (duration) this.duration = duration
-    this.time = 0
-    this.timingFunction = timingFunction
+  toTarget(target, duration, timingFunction = easeInSine) {
+    return new Promise((resolve) => {
+      this.origin = this.status
+      this.target = target
+      if (duration) this.duration = duration
+      this.time = 0
+      this.timingFunction = timingFunction
+      this.resolve = resolve
+    })
   }
 
   /**
    * @param {number} t
    */
-  updateGraphics(t) {
+  updateDate(t) {
     if (this.time < this.duration) {
       const timing = this.timingFunction(this.time / this.duration)
       this.status = (this.target - this.origin) * timing
@@ -53,6 +52,10 @@ export default class DynamicProperties {
       if (this.status !== this.target) {
         this.status = this.target
         this.origin = this.target
+        if (this.resolve) {
+          this.resolve(this)
+          this.resolve = null
+        }
       }
     }
   }
