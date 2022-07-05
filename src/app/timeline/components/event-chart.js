@@ -33,7 +33,7 @@ export default class EventChart extends BaseContainer {
   }
 
   getCharGroup() {
-    return this.types.map((model, index) => {
+    return this.types.filter(m => m.data.length).map((model, index) => {
       return new ChartGroup({
         app: this.getApplication(),
         model,
@@ -50,6 +50,7 @@ export default class EventChart extends BaseContainer {
   init() {
     const children = this.getCharGroup()
     this.refreshChildren(...children)
+    // console.log(children);
     // 計算群組高度給予碰撞
     let y = 0
     children.forEach((child) => {
@@ -58,10 +59,8 @@ export default class EventChart extends BaseContainer {
     })
   }
 
-  /**
-   * @param {number} t 
-   */
-  update(t) {}
-
-  draw() {}
+  setAttribute(key, value) {
+    this[key] = value
+    this.init()
+  }
 }

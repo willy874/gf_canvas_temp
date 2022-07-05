@@ -46,7 +46,7 @@ export default class ChartGroup extends BaseContainer {
 
   getCharItem() {
     /** @type {MatrixInfo[]} */
-    const matrixInfoList = TimeMatrix.getInfo(this.model.data)
+    const matrixInfoList = TimeMatrix.getInfo(this.model.data, this.model.collapse)
     return this.model.data.map((model, index) => {
       const matrixInfo = matrixInfoList[index]
       return new ChartItem({

@@ -50,6 +50,7 @@ export default class ChartItem extends BaseContainer {
     this.baseEndTime = baseEndTime;
 
     this.graphics = new Graphics()
+    this.buttonMode = true
     this.widthInfo = new DynamicProperties({
       current: this.graphics,
       target: this.getChartWidth(),
@@ -83,7 +84,7 @@ export default class ChartItem extends BaseContainer {
 
   getChartWidth() {
     const rangeTime = this.endTime - this.startTime
-    return Math.floor(rangeTime / this.basePixelTime)
+    return Math.floor(rangeTime / this.basePixelTime) || 2
   }
 
   getChartLeft() {

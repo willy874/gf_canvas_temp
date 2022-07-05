@@ -11,14 +11,10 @@ export default class BaseContainer extends Container {
       y,
       canvasWidth,
       canvasHeight,
-      // direction,
-      // paddingTop,
-      // paddingBottom,
-      // paddingLeft,
-      // paddingRight,
     } = args
     /** @type {() => Application} */
     this.getApplication = () => app;
+    this.interactive = true
     /** @type {number} */
     if (x) this.x = x
     /** @type {number} */
@@ -27,16 +23,6 @@ export default class BaseContainer extends Container {
     this.baseWidth = canvasWidth;
     /** @type {number} */
     this.baseHeight = canvasHeight;
-    // /** @type {'column' | 'row' | 'none'} */
-    // this.direction = direction || 'none';
-    // /** @type {number} */
-    // this.paddingTop = paddingTop || 0
-    // /** @type {number} */
-    // this.paddingBottom = paddingBottom || 0
-    // /** @type {number} */
-    // this.paddingLeft = paddingLeft || 0
-    // /** @type {number} */
-    // this.paddingRight = paddingRight || 0
   }
 
   /**
@@ -48,31 +34,9 @@ export default class BaseContainer extends Container {
 
   init() {}
 
-  // layoutTypography() {
-  //   if (this.direction === 'row') {
-  //     let x = this.paddingLeft
-  //     this.children.forEach(container => {
-  //       if (container instanceof BaseContainer) {
-  //         container.x = x
-  //         x += (container.width + this.paddingLeft + this.paddingRight)
-  //       }
-  //     })
-  //   }
-  //   if (this.direction === 'column') {
-  //     let y = this.paddingTop
-  //     this.children.forEach(container => {
-  //       if (container instanceof BaseContainer) {
-  //         container.y = y
-  //         y += (container.height + this.paddingTop + this.paddingBottom)
-  //       }
-  //     })
-  //   }
-  // }
-
   create() {
     this.init()
     this.draw()
-    // this.layoutTypography()
   }
 
   removeSelf() {
@@ -80,26 +44,23 @@ export default class BaseContainer extends Container {
   }
 
   refreshChildren(...children) {
-    this.children.forEach(child => {
-      child.removeChild(child)
-    })
+    this.removeChildren()
     this.addChild(...children)
   }
 
   /**
    * @param {number} t 
    */
-  _update(t) {
+   tickerRender(t) {
     this.children.forEach(child => {
       if (child instanceof Graphics) {
         child.clear()
       }
       if (child instanceof BaseContainer) {
-        child._update(t)
+        child.tickerRender(t)
       }
     })
     this.update(t)
     this.draw()
-    // this.layoutTypography()
   }
 }

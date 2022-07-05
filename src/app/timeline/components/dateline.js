@@ -165,8 +165,6 @@ export default class DateLine extends BaseContainer {
     this.addChild(...texts)
   }
 
-  updateDateTime() {}
-
   drawArrowLine() {
     const graphics = this.centerLineGraphics
     graphics.lineStyle(this.lineSolidWidth)
@@ -204,7 +202,6 @@ export default class DateLine extends BaseContainer {
   update(t) {
     this.centerLine.updateDate(t)
     this.scaleLine.updateDate(t)
-    this.updateDateTime()
   }
 
   draw() {
