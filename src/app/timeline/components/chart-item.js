@@ -2,40 +2,52 @@ import {
   Graphics,
 } from '@base/pixi';
 import {
-  easeInSine
+  easeInSine,
 } from '@base/utils';
 import BaseContainer from './base-container'
 import DynamicProperties from './dynamic-properties'
 
-
-export default class TimeLimeChartItem extends BaseContainer {
+export default class ChartItem extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      startTime,
-      endTime,
-      x,
-      y,
-      baseWidth,
-      baseHeight,
       model,
       color,
-      timeMatrix,
-      startX,
-      endX,
+      column,
+      row,
+      matrix,
+      startTime,
+      endTime,
+      title,
+      type,
+      basePixelTime,
+      baseStartTime,
+      baseEndTime
     } = args;
 
     this.model = model
-    this.startTime = startTime
-    this.endTime = endTime
-    this.x = x
-    this.y = y
-    this.baseWidth = baseWidth
-    this.baseHeight = baseHeight
+    /** @type {number} */
     this.color = color
-    this.timeMatrix = timeMatrix
-    this.paddingBottom = 4
-    this.basePixelTime = (endTime - startTime) / (endX - startX)
+    /** @type {number} */
+    this.column = column
+    /** @type {number} */
+    this.row = row
+    /** @type {string[][]} */
+    this.matrix = matrix
+    /** @type {number} */
+    this.startTime = startTime
+    /** @type {number} */
+    this.endTime = endTime
+    /** @type {string} */
+    this.title = title
+    /** @type {string} */
+    this.type = type
+    /** @type {number} */
+    this.basePixelTime = basePixelTime
+    /** @type {number} */
+    this.baseStartTime = baseStartTime;
+    /** @type {number} */
+    this.baseEndTime = baseEndTime;
 
     this.graphics = new Graphics()
     this.widthInfo = new DynamicProperties({
@@ -56,6 +68,7 @@ export default class TimeLimeChartItem extends BaseContainer {
       current: this.graphics,
       status: this.getChartTop(),
     })
+    this.create()
     this.addChild(this.graphics)
   }
 
@@ -69,25 +82,25 @@ export default class TimeLimeChartItem extends BaseContainer {
   }
 
   getChartWidth() {
-    const rangeTime = this.model.endTime - this.model.startTime
+    const rangeTime = this.endTime - this.startTime
     return Math.floor(rangeTime / this.basePixelTime)
   }
 
   getChartLeft() {
-    const rangeTime = this.model.startTime - this.startTime
-    return Math.floor(rangeTime / this.basePixelTime)
+    const baseTime = this.startTime - this.baseStartTime
+    return Math.floor(baseTime / this.basePixelTime)
   }
 
   getChartTop() {
-    const modelData = this.timeMatrix.modelInfo.get(this.model.id)
-    const index = modelData.row
-    return index * this.heightInfo.status + index * this.paddingBottom
+    return this.row * this.heightInfo.status + this.row * 16
   }
 
   drawChart() {
-    const current = this.graphics
-    current.beginFill(this.color, 1)
-    current.drawRoundedRect(this.leftInfo.status, this.topInfo.status, this.widthInfo.status, this.heightInfo.status, 16)
+    const graphics = this.graphics
+    graphics.beginFill(0xffffff, 0)
+    graphics.drawRect(0, 0, this.widthInfo.status, this.heightInfo.status + 16)
+    graphics.beginFill(this.color)
+    graphics.drawRect(0, 8, this.widthInfo.status, this.heightInfo.status)
   }
 
   /**

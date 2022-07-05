@@ -25,10 +25,7 @@ interface TimeLimeChartItemInfo extends GraphicsInfo {
   model: EventModel
 }
 
-interface IEventCollection<T> extends ICollection<T> {
-  getMinStartTime: () => number
-  getMaxEndTime: () => number
-}
+interface IEventCollection<T> extends ICollection<T> {}
 
 interface IEventModel {
   id: number
@@ -51,4 +48,23 @@ class ICollection<T> {
   set(key: PrimaryKeyType, value: any): void
   delete(key: PrimaryKeyType): void
   getList(sort: Array<PrimaryKeyType | T>): T[]
+}
+// 理想的 Model
+interface ITimeLimeChartModel {
+  id: number
+  startTime: number
+  endTime: number
+  title: string
+  eventTypeId: number
+}
+interface IEventTypeModel {
+  id: number
+  name: string
+  collapse: boolean
+  data: ITimeLimeChartModel[]
+}
+interface MatrixInfo {
+  row: number
+  column: number
+  matrix: string[][]
 }

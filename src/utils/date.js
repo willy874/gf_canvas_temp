@@ -30,3 +30,15 @@ export function dateIsSame(date1, date2, format = 'YYYY/MM/DD') {
 export function dateSubtract(date, value, unit) {
   return dayjs(date).subtract(value, unit).toDate()
 }
+
+export function toTimeFormat(time) {
+  let timeTotal = Math.floor(time / 1000)
+  const seconds = timeTotal % 60
+  timeTotal = Math.floor(timeTotal / 60)
+  const minutes = timeTotal % 60
+  timeTotal = Math.floor(timeTotal / 60)
+  const hour = timeTotal % 24
+  timeTotal = Math.floor(timeTotal / 24)
+  const day = timeTotal
+  return `${day} ${hour}:${minutes}:${seconds}`
+}

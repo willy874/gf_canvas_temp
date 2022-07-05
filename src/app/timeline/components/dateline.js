@@ -5,8 +5,6 @@ import {
 import {
   dateFormat,
   dateSubtract,
-  // dateToNumber,
-  // dateIsSame
 } from '@base/utils'
 import {
   // uniq
@@ -103,15 +101,7 @@ export default class DateLine extends BaseContainer {
       this.scaleLine.toTarget(this.scaleHeight, 300)
     })
 
-    // DateTime Text
-    this.initDateTime()
-    this.baseStartX = this.headerWidth - this.textWidth / 2
-    this.baseEndX = this.baseStartX + this.textWidth * (this.middleTexts.length + 1)
-    // console.log(this.baseStartX, this.baseEndX);
-    // console.log(this.startTime, this.endTime);
-
-
-    this.addChild(this.centerLineGraphics, ...this.textList)
+    this.addChild(this.centerLineGraphics)
     this.create()
   }
 
@@ -130,11 +120,11 @@ export default class DateLine extends BaseContainer {
     if (key === 'translateY') this.translateY = value
     const initDateTimeDepend = ['textPaddingX', 'textPaddingY', 'fontSize', 'fontFamily', 'unit', 'translateX', 'translateY']
     if (initDateTimeDepend.includes(key)) {
-      this.initDateTime()
+      this.init()
     }
   }
 
-  initDateTime() {
+  init() {
     this.endTime = Date.now() + this.translateX
     this.middleTexts = this.getTexts()
     this.startTimeText = this.middleTexts.pop()
@@ -145,20 +135,34 @@ export default class DateLine extends BaseContainer {
     } else {
       this.lineBaseY = this.scaleHeight + this.textPaddingY * 2
     }
-    // 中間日期
+    // 中間日期定位
     this.middleTexts.forEach((text, index) => {
       const startX = this.textPaddingX + this.headerWidth
       const diffCenter = (this.textWidth - text.width) / 2
       text.x = startX + this.textWidth * index + diffCenter
       text.y = this.textPaddingY
     })
-    // 開始日期
-    this.startTimeText.x = this.middleTexts[0].x - this.startTimeText.width - this.textWidth / 2
-    this.startTimeText.y = this.textPaddingY
-    // 結束日期
+    // 結束日期定位
     const lastIndex = this.middleTexts.length - 1
     this.endTimeText.x = this.middleTexts[lastIndex].x + this.textWidth
     this.endTimeText.y = this.textPaddingY
+    // 開始日期定位
+    this.startTimeText.x = this.middleTexts[0].x - this.startTimeText.width - this.textWidth / 2
+    this.startTimeText.y = this.textPaddingY
+
+    this.baseStartX = this.headerWidth - this.textWidth / 2
+    this.baseEndX = this.baseStartX + this.textWidth * (this.middleTexts.length + 1)
+
+    this.refreshText(...this.textList)
+  }
+
+  refreshText(...texts) {
+    this.children.forEach(child => {
+      if (child instanceof Text) {
+        child.removeChild(child)
+      }
+    })
+    this.addChild(...texts)
   }
 
   updateDateTime() {}
@@ -269,9 +273,10 @@ export default class DateLine extends BaseContainer {
     let isMonth = false
     let isYear = false
     return new Array(block + 2).fill(null).map((_, index, arr) => {
-      const item = this.endTime - (index + 1) * time
-      const prev = this.endTime - (index + 1) * time - time
-      if (index === 0 || arr.length - 1 === index) {
+      const item = this.endTime - index * time
+      const prev = this.endTime - index * time - time
+      const isLast = arr.length - 1 === index
+      if (index === 0 || isLast) {
         return new Text(dateFormat(item, headerFormat), {
           fontWeight: '700',
           fontFamily: this.fontFamily,

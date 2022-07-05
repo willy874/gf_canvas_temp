@@ -1,16 +1,11 @@
 import BaseContainer from './base-container'
-import TimeLimeChartItem from './chart-item'
-import {
-  TimeMatrix
-} from '../data'
-import {
-  Collection,
-} from '@base/utils';
+import ChartGroup from './chart-group'
 import {
   Graphics,
 } from '@base/pixi';
-
-const colors = [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF]
+// import {
+//   dateFormat
+// } from '@base/utils';
 
 export default class EventChart extends BaseContainer {
   constructor(args) {
@@ -18,62 +13,55 @@ export default class EventChart extends BaseContainer {
     const {
       startTime,
       endTime,
-      x,
-      y,
-      canvasWidth,
-      canvasHeight,
-      collection,
-      basePixelTime,
+      effectWidth,
+      types,
+      colors
     } = args;
+    /** @type {number} */
     this.startTime = startTime;
+    /** @type {number} */
     this.endTime = endTime;
-    this.x = x;
-    this.y = y;
-    this.baseWidth = canvasWidth;
-    this.baseHeight = canvasHeight;
-    /** @type {IEventCollection<IEventModel>} */
-    this.collection = collection;
-    /** @type {ICollection<TimeLimeChartItem>} */
-    this.chartItemCollection = new Collection()
-    /** @type {ICollection<IEventModel[]>} */
-    this.typeCollection = this.getTypeList()
-    /** @type {string[]} */
-    this.typeList = this.typeCollection.keys()
-    /** @type {TimeMatrix} */
-    this.timeMatrix = new TimeMatrix(this.typeList, this.collection.all())
-    this.collection.all().forEach(model => {
-      this.chartItemCollection.set(model.id, new TimeLimeChartItem({
-        ...args,
-        model,
-        typeList: this.typeList,
-        timeMatrix: this.timeMatrix,
-        color: colors[this.typeList.indexOf(model.type) % colors.length],
-        basePixelTime,
-      }))
-    })
-
+    /** @type {number} */
+    this.effectWidth = effectWidth;
+    /** @type {IEventTypeModel[]} */
+    this.types = types;
     /** @type {number[]} */
-    this.effectList = this.getEffectList()
+    this.colors = colors;
 
     this.graphics = new Graphics()
-    const children = this.chartItemCollection.all()
-    this.addChild(...children)
+    this.create()
   }
 
-  getTypeList() {
-    /** @type {ICollection<IEventModel[]>} */
-    const types = new Collection()
-    this.collection.all().forEach(model => {
-      if (types.has(model.type)) {
-        types.get(model.type).push(model)
-      } else {
-        types.set(model.type, [model])
-      }
+  getCharGroup() {
+    return this.types.map((model, index) => {
+      return new ChartGroup({
+        app: this.getApplication(),
+        model,
+        sort: index,
+        color: this.colors[index % this.colors.length],
+        effectWidth: this.effectWidth,
+        basePixelTime: (this.endTime - this.startTime) / this.effectWidth,
+        baseStartTime: this.startTime,
+        baseEndTime: this.endTime
+      })
     })
-    return types
   }
 
-  getEffectList() {
-    return this.collection.all().filter(p => p.startTime < this.endTime || p.endTime > this.startTime).map(p => p.id)
+  init() {
+    const children = this.getCharGroup()
+    this.refreshChildren(...children)
+    // 計算群組高度給予碰撞
+    let y = 0
+    children.forEach((child) => {
+      child.y = y
+      y += child.height
+    })
   }
+
+  /**
+   * @param {number} t 
+   */
+  update(t) {}
+
+  draw() {}
 }

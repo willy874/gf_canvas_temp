@@ -18,16 +18,6 @@ export class EventCollection extends Collection {
       this.set(p.id, new EventModel(p));
     })
   }
-
-  getMinStartTime() {
-    const list = this.all()
-    return list.length ? Math.min(...list.map(p => p.startTime)) : Date.now()
-  }
-
-  getMaxEndTime() {
-    const list = this.all()
-    return list.length ? Math.max(...list.map(p => p.endTime)) : Date.now()
-  }
 }
 
 /**
@@ -44,56 +34,18 @@ export class EventModel {
 }
 
 
-
-/**
- * @typedef {Object} MatrixInfo
- * @property {number} row
- * @property {number} column
- */
 /**
  * @typedef {MatrixInfo & IEventModel} EventModelInfo
  */
 
 export class TimeMatrix {
   /**
-   * @param {string[]} types 
-   * @param {IEventModel[]} list 
-   */
-  constructor(types, list) {
-    this.current = []
-    this.types = types
-    /** @type {ICollection<EventModelInfo>} */
-    this.modelInfo = new Collection()
-
-    types.forEach((_, index) => {
-      this.current[index] = []
-    })
-    list.forEach(p => {
-      const info = this.add(p.type, p.startTime, p.endTime)
-      /** @type {EventModelInfo} */
-      const eventModelInfo = {
-        ...p,
-        ...info
-      }
-      this.modelInfo.set(p.id, eventModelInfo)
-    })
-  }
-
-  getIndexByType(type) {
-    return this.types.indexOf(type)
-  }
-
-  getTypeByIndex(index) {
-    return this.types[index]
-  }
-
-  /**
    * @param {string} prev 
    * @param {string} current 
    * @param {string} value 
    * @returns {boolean}
    */
-  isPrepend(prev, current, value) {
+  static isPrepend(prev, current, value) {
     // 確認是不是 index 0
     if (prev) {
       const modelStartTime = Number(value.match(/^\d+/)[0])
@@ -114,7 +66,7 @@ export class TimeMatrix {
    * @param {string} value 
    * @returns {boolean}
    */
-  isAppend(current, next, value) {
+  static isAppend(current, next, value) {
     // 確認是不是 index last
     if (next) {
       const modelStartTime = Number(value.match(/^\d+/)[0])
@@ -134,14 +86,14 @@ export class TimeMatrix {
    * @param {string} value 
    * @returns {number}
    */
-  addMatrix(matrix, value) {
+  static addMatrix(matrix, value) {
     let insertIndex = -1
     for (let index = 0; index < matrix.length; index++) {
-      if (this.isPrepend(matrix[index - 1], matrix[index], value)) {
+      if (TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value)) {
         insertIndex = index
         break
       }
-      if (this.isAppend(matrix[index], matrix[index + 1], value)) {
+      if (TimeMatrix.isAppend(matrix[index], matrix[index + 1], value)) {
         insertIndex = index + 1
         break
       }
@@ -154,38 +106,34 @@ export class TimeMatrix {
   }
 
   /**
-   * @param {string} type 
-   * @param {number} startTim 
-   * @param {number} endTime 
-   * @return {MatrixInfo}
+   * @param {ITimeLimeChartModel[]} list
+   * @returns {MatrixInfo[]}
    */
-  add(type, startTim, endTime) {
-    /** @type {number} */
-    const typeIndexOf = this.getIndexByType(type)
-    if (typeIndexOf === -1) {
-      throw new Error("can't find this type.")
-    }
-    /** @type {string[][]} */
-    const matrix = this.current[typeIndexOf]
-    const value = startTim + '-' + endTime
-    let column = -1
-    let row = 0
-    while (true) {
-      const matrixRow = matrix[row]
-      if (matrixRow) {
-        column = this.addMatrix(matrixRow, value)
-        if (column >= 0) {
+  static getInfo(list) {
+    const matrix = []
+    return list.map(model => {
+      const value = model.startTime + '-' + model.endTime
+      let column = -1
+      let row = 0
+      while (true) {
+        const matrixRow = matrix[row]
+        if (matrixRow) {
+          column = TimeMatrix.addMatrix(matrixRow, value)
+          if (column >= 0) {
+            break
+          }
+        } else {
+          column = 0
+          matrix[row] = [value]
           break
         }
-      } else {
-        matrix[row] = [value]
-        break
+        row++
       }
-      row++
-    }
-    return {
-      row,
-      column
-    }
+      return {
+        row,
+        column,
+        matrix
+      }
+    })
   }
 }
