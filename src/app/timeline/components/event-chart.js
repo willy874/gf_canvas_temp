@@ -16,7 +16,7 @@ export default class EventChart extends BaseContainer {
       colors,
     } = args;
     /** @type {number} */
-    this.y = DateLine.y + DateLine.lineBaseY
+    this.y = DateLine.y + DateLine.lineBaseY + 16
     /** @type {boolean} */
     this.isInit = isInit
     /** @type {TimeUnit|number} */

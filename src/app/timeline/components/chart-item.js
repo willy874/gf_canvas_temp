@@ -1,14 +1,14 @@
 import {
   Graphics,
 } from '@base/pixi';
-import {
-  easeInSine,
-} from '@base/utils';
 // import {
 //   EventType
 // } from '@base/enums'
 import BaseContainer from '@base/components/base-container'
 import DynamicProperties from '@base/components/dynamic-properties'
+import {
+  Coordinate
+} from './coordinate';
 
 export default class ChartItem extends BaseContainer {
   constructor(args) {
@@ -16,15 +16,23 @@ export default class ChartItem extends BaseContainer {
     const {
       isInit,
       color,
-      column,
-      row,
-      matrix,
+      DateLine,
+      model,
+      matrixInfo
+    } = args;
+    const {
       startTime,
       endTime,
       title,
       type,
-      DateLine
-    } = args;
+    } = model
+    const {
+      column,
+      row,
+      matrix,
+    } = matrixInfo
+
+    // === Props Attribute ===
     /** @type {boolean} */
     this.isInit = isInit
     /** @type {number} */
@@ -46,24 +54,18 @@ export default class ChartItem extends BaseContainer {
     /** @type {import('./dateline').default} */
     this.DateLine = DateLine;
 
+    // === Base Attribute ===
+    /** @type {boolean} */
+    this.interactive = true
+    /** @type {boolean} */
+    this.buttonMode = true
+
     /** @type {Graphics} */
     this.graphics = new Graphics()
-    this.buttonMode = true
-    if (this.isInit) {
-      /** @type {IDynamicProperties} */
-      this.widthInfo = new DynamicProperties({
-        current: this.graphics,
-        target: this.getChartWidth(),
-        duration: 1000,
-        timingFunction: easeInSine,
-      })
-    } else {
-      /** @type {IDynamicProperties} */
-      this.widthInfo = new DynamicProperties({
-        current: this.graphics,
-        status: this.getChartWidth(),
-      })
-    }
+    /** @type {IDynamicProperties} */
+    this.widthInfo = new DynamicProperties({
+      current: this.graphics,
+    })
     /** @type {IDynamicProperties} */
     this.heightInfo = new DynamicProperties({
       current: this.graphics,
@@ -79,14 +81,47 @@ export default class ChartItem extends BaseContainer {
       current: this.graphics,
       status: this.getChartTop(),
     })
+
+    this.startCoordinate = new Coordinate({
+      app: this.getApplication(),
+      isInit,
+      color,
+      model,
+      currentTime: startTime
+    })
+    this.endCoordinate = new Coordinate({
+      app: this.getApplication(),
+      isInit,
+      color,
+      model,
+      currentTime: startTime
+    })
+    /** @type {IDynamicProperties} */
+    this.coordinateTop = new DynamicProperties()
+
+    if (this.isInit) {
+      this.widthInfo.toTarget(this.getChartWidth(), 1000).then(() => {
+        this.endCoordinate.alpha = 1
+        this.startCoordinate.alpha = 1
+        this.coordinateTop.toTarget(20, 500)
+      })
+    } else {
+      this.widthInfo.toTarget(this.getChartWidth(), 0)
+      this.endCoordinate.alpha = 1
+      this.startCoordinate.alpha = 1
+      this.coordinateTop.toTarget(20, 0)
+    }
+
     this.create()
-    this.addChild(this.graphics)
+    this.addChild(this.graphics, this.startCoordinate, this.endCoordinate)
     // 目前不需要 this.heightInfo, this.leftInfo, this.topInfo
-    this.addProperties(this.widthInfo)
-    // this.event.on(EventType.SCALEMOVE, (e) => this.onScaledMove(e))
+    this.addProperties(this.widthInfo, this.coordinateTop)
+
+    // === Event ===
+    this.on('click', (e) => this.onClick(e))
   }
 
-  onScaledMove(event) {
+  onClick(event) {
 
   }
 
@@ -116,7 +151,7 @@ export default class ChartItem extends BaseContainer {
     return this.row * this.heightInfo.status + this.row * 16
   }
 
-  drawChart() {
+  draw() {
     const graphics = this.graphics
     graphics.beginFill(0xffffff, 0)
     graphics.drawRect(0, 0, this.widthInfo.status, this.heightInfo.status + 16)
@@ -124,7 +159,9 @@ export default class ChartItem extends BaseContainer {
     graphics.drawRect(0, 8, this.widthInfo.status, this.heightInfo.status)
   }
 
-  draw() {
-    this.drawChart()
+  update(t) {
+    this.startCoordinate.y = -20 + this.coordinateTop.status
+    this.endCoordinate.x = this.widthInfo.status
+    this.endCoordinate.y = -20 + this.coordinateTop.status
   }
 }

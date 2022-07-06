@@ -32,7 +32,7 @@ export default class DateLine extends BaseContainer {
       translateX,
       fontFamily,
     } = args;
-    // === Props Attribute
+    // === Props Attribute ===
     /** @type {number} */
     this.canvasWidth = canvasWidth;
     /** @type {number} */
@@ -51,7 +51,8 @@ export default class DateLine extends BaseContainer {
     this.textPaddingX = textPaddingX
     /** @type {number} */
     this.textPaddingY = textPaddingY
-    // === Base Attribute
+
+    // === Base Attribute ===
     /** @type {number} */
     this.scaleHeight = 6
     /** @type {number} */

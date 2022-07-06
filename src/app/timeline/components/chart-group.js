@@ -50,8 +50,8 @@ export default class ChartGroup extends BaseContainer {
         type: this.model.name,
         color: this.color,
         DateLine: this.DateLine,
-        ...model,
-        ...matrixInfo
+        model,
+        matrixInfo
       })
     })
   }
@@ -62,12 +62,6 @@ export default class ChartGroup extends BaseContainer {
   update(t) {}
 
   draw() {
-
-    if (this.sort) {
-      this.graphics.lineStyle(1, 0xEEEEEE)
-      this.graphics.moveTo(0, 0)
-      this.graphics.lineTo(this.canvasWidth, 0)
-    }
     this.children.forEach(container => {
       if (container instanceof ChartItem) {
         const box = container.getCurrentBoxInfo()
@@ -75,6 +69,12 @@ export default class ChartGroup extends BaseContainer {
         container.y = box.top
       }
     })
+
+    // if (this.sort) {
+    //   this.graphics.lineStyle(1, 0xEEEEEE)
+    //   this.graphics.moveTo(0, 0)
+    //   this.graphics.lineTo(this.canvasWidth, 0)
+    // }
 
   }
 

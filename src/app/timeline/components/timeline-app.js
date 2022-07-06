@@ -49,7 +49,6 @@ export default class TimelineApplication {
     this.root.addChild(this.dateLine, this.eventChart, this.graphics)
     this.app.stage.addChild(this.root)
 
-
     fetchEventData().then(data => {
       if (data) this.eventChart.setAttribute('types', data)
     })
