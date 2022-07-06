@@ -133,15 +133,16 @@ export default class TimelineApplication {
       backgroundColor: 0x000000,
       backgroundAlpha: 0.02
     })
+    /** @type {RootContainer} */
+    this.root = new RootContainer({
+      app: this.app,
+    })
     /** @type {DateLine} */
     this.dateLine = this.createDateLine()
     /** @type {EventChart} */
     this.eventChart = this.createEventChart()
-    /** @type {RootContainer} */
-    this.root = new RootContainer({
-      app: this.app,
-      children: [this.dateLine, this.eventChart, this.graphics]
-    })
+
+    this.root.addChild(this.dateLine, this.eventChart, this.graphics)
     this.app.stage.addChild(this.root)
 
 

@@ -12,13 +12,9 @@ import BaseContainer from "./base-container"
 export default class RootContainer extends BaseContainer {
   constructor(args) {
     super(args)
-    const {
-      children
-    } = args
     /** @type {EventEmitter} */
     this.event = new EventEmitter()
 
-    this.addChild(...children)
     this.useTickerEvent((t) => {
       this.tickerRender(t)
     })
