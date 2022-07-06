@@ -21,12 +21,6 @@ export default {
     height: {
       control: 'number'
     },
-    x: {
-      control: 'number'
-    },
-    y: {
-      control: 'number'
-    },
   },
 };
 
@@ -127,7 +121,5 @@ AutoTime.args = {
   unit: TimeUnit.WEEK,
   width: 1000,
   height: 500,
-  x: 20,
-  y: 20,
   types
 };

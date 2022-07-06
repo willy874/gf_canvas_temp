@@ -2,6 +2,7 @@ import {
   Container,
   Graphics
 } from '@base/pixi';
+
 export default class BaseContainer extends Container {
   constructor(args) {
     super();
@@ -14,7 +15,6 @@ export default class BaseContainer extends Container {
     } = args
     /** @type {() => Application} */
     this.getApplication = () => app;
-    this.interactive = true
     /** @type {number} */
     if (x) this.x = x
     /** @type {number} */
@@ -34,6 +34,11 @@ export default class BaseContainer extends Container {
 
   init() {}
 
+  setAttribute(key, value) {
+    this[key] = value
+    this.init()
+  }
+
   create() {
     this.init()
     this.draw()
@@ -51,7 +56,7 @@ export default class BaseContainer extends Container {
   /**
    * @param {number} t 
    */
-   tickerRender(t) {
+  tickerRender(t) {
     this.children.forEach(child => {
       if (child instanceof Graphics) {
         child.clear()

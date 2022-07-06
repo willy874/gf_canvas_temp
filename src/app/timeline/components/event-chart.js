@@ -1,11 +1,8 @@
-import BaseContainer from './base-container'
+import BaseContainer from '@base/components/base-container'
 import ChartGroup from './chart-group'
 import {
   Graphics,
 } from '@base/pixi';
-// import {
-//   dateFormat
-// } from '@base/utils';
 
 export default class EventChart extends BaseContainer {
   constructor(args) {
@@ -50,17 +47,11 @@ export default class EventChart extends BaseContainer {
   init() {
     const children = this.getCharGroup()
     this.refreshChildren(...children)
-    // console.log(children);
     // 計算群組高度給予碰撞
     let y = 0
     children.forEach((child) => {
       child.y = y
       y += child.height
     })
-  }
-
-  setAttribute(key, value) {
-    this[key] = value
-    this.init()
   }
 }

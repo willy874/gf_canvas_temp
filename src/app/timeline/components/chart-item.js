@@ -4,7 +4,7 @@ import {
 import {
   easeInSine,
 } from '@base/utils';
-import BaseContainer from './base-container'
+import BaseContainer from '@base/components/base-container'
 import DynamicProperties from './dynamic-properties'
 
 export default class ChartItem extends BaseContainer {

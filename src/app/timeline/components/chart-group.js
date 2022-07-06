@@ -1,11 +1,11 @@
 import {
   Graphics,
 } from '@base/pixi';
-import BaseContainer from './base-container'
+import BaseContainer from '@base/components/base-container'
 import ChartItem from './chart-item'
 import {
   TimeMatrix
-} from '../data'
+} from '@base/class'
 
 export default class ChartGroup extends BaseContainer {
   constructor(args) {

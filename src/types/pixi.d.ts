@@ -9,3 +9,5 @@ type Graphics = import('pixi.js').Graphics
 type Text = import('pixi.js').Text
 
 type ITextStyle = import('pixi.js').ITextStyle
+
+type EventEmitter = import('eventemitter3').EventEmitterStatic

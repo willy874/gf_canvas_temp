@@ -4,17 +4,14 @@ import {
 } from '@base/pixi';
 import {
   dateFormat,
-  dateSubtract,
 } from '@base/utils'
-import {
-  // uniq
-} from '@base/utils/lodash'
 import {
   FontFamily,
   FontSize,
-  TimeUnit
+  TimeUnit,
+  EventType
 } from '@base/enums'
-import BaseContainer from './base-container'
+import BaseContainer from '@base/components/base-container'
 import DynamicProperties from './dynamic-properties'
 
 
@@ -22,8 +19,6 @@ export default class DateLine extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      x,
-      y,
       canvasWidth,
       canvasHeight,
       fontSize,
@@ -33,13 +28,10 @@ export default class DateLine extends BaseContainer {
       unit,
       translateX,
       translateY,
-      fontFamily
+      fontFamily,
+      event
     } = args;
     // === Props Attribute
-    /** @type {number} */
-    this.x = x;
-    /** @type {number} */
-    this.y = y;
     /** @type {number} */
     this.canvasWidth = canvasWidth;
     /** @type {number} */
@@ -60,15 +52,23 @@ export default class DateLine extends BaseContainer {
     this.translateX = translateX
     /** @type {number} */
     this.translateY = translateY
+    /** @type {import('eventemitter2').EventEmitter2} */
+    this.event = event
     // === Base Attribute
     /** @type {number} */
     this.scaleHeight = 6
     /** @type {number} */
     this.lineWidth = this.canvasWidth - this.x * 2
     /** @type {number} */
+    this.minTextWidth = this.getTextWidth('mm:ss', this.fontSize)
+    /** @type {number} */
+    this.maxTextWidth = this.getTextWidth('YYYY/MM/DD', this.fontSize)
+    /** @type {number} */
+    this.maxTextHeight = this.getTextHeight('YYYY/MM/DD\nHH:mm:ss', this.fontSize)
+    /** @type {number} */
     this.textWidth = 0
     /** @type {number} */
-    this.headerWidth = 0
+    this.textTotalWidth = 0
     /** @type {number} */
     this.lineBaseY = 0
     /** @type {number} */
@@ -84,9 +84,9 @@ export default class DateLine extends BaseContainer {
     /** @type {Text} */
     this.endTimeText = null
     /** @type {Text[]} */
-    this.middleTexts = []
-    /** @type {Text[]} */
     this.textList = []
+    /** @type {Text[]} */
+    this.reverseTextList = []
     /** @type {Graphics} */
     this.centerLineGraphics = new Graphics()
     /** @type {IDynamicProperties} */
@@ -101,68 +101,51 @@ export default class DateLine extends BaseContainer {
       this.scaleLine.toTarget(this.scaleHeight, 300)
     })
 
+    this.event.on(EventType.DRAGMOVE, (e) => this.onDragmove(e))
     this.addChild(this.centerLineGraphics)
     this.create()
   }
 
-  setAttribute(key, value) {
-    if (key === 'x') this.x = value;
-    if (key === 'y') this.y = value;
-    if (key === 'canvasWidth') this.canvasWidth = value;
-    if (key === 'canvasHeight') this.canvasHeight = value;
-    if (key === 'lineSolidWidth') this.lineSolidWidth = value
-    if (key === 'textPaddingX') this.textPaddingX = value
-    if (key === 'textPaddingY') this.textPaddingY = value
-    if (key === 'fontSize') this.fontSize = value;
-    if (key === 'fontFamily') this.fontFamily = value
-    if (key === 'unit') this.unit = value
-    if (key === 'translateX') this.translateX = value
-    if (key === 'translateY') this.translateY = value
-    const initDateTimeDepend = ['textPaddingX', 'textPaddingY', 'fontSize', 'fontFamily', 'unit', 'translateX', 'translateY']
-    if (initDateTimeDepend.includes(key)) {
-      this.init()
+  onDragmove(event) {
+    if (this.translateX + event.moveX >= 0) {
+      this.translateX = this.translateX + event.moveX
+    }
+    this.textUpdate()
+  }
+
+  textUpdate() {
+    if (this.textTotalWidth - this.lineWidth - this.translateX < 0) {
+      this.dateList.push(this.getDateValue(this.dateList.length))
+      const index = this.dateList.length - 2
+      const text = this.getText(dateFormat(this.dateList[index], 'YYYY/MM/DD HH:mm:ss'), index)
+      this.textList.push(text)
+      this.addChild(text)
+      this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
     }
   }
 
   init() {
-    this.endTime = Date.now() + this.translateX
-    this.middleTexts = this.getTexts()
-    this.startTimeText = this.middleTexts.pop()
-    this.endTimeText = this.middleTexts.shift()
-    this.textList = [this.startTimeText, ...this.middleTexts.reverse(), this.endTimeText]
+    this.endTime = Date.now()
+    this.dateList = this.getDateValueList()
+    this.textList = this.dateList.map(time => dateFormat(time, 'YYYY/MM/DD HH:mm:ss')).map((text, index) => this.getText(text, index))
+    this.dateList.push(this.getDateValue(this.dateList.length))
+    const textWidthList = this.textList.map(text => text.width)
+    this.textWidth = textWidthList.length ? Math.max(...textWidthList) : this.minTextWidth
+    this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
+    this.textUpdate()
     if (this.textList.length) {
       this.lineBaseY = Math.max(...this.textList.map(t => t.height)) + this.scaleHeight + this.textPaddingY * 2
     } else {
       this.lineBaseY = this.scaleHeight + this.textPaddingY * 2
     }
-    // 中間日期定位
-    this.middleTexts.forEach((text, index) => {
-      const startX = this.textPaddingX + this.headerWidth
-      const diffCenter = (this.textWidth - text.width) / 2
-      text.x = startX + this.textWidth * index + diffCenter
-      text.y = this.textPaddingY
-    })
-    // 結束日期定位
-    const lastIndex = this.middleTexts.length - 1
-    this.endTimeText.x = this.middleTexts[lastIndex].x + this.textWidth
-    this.endTimeText.y = this.textPaddingY
-    // 開始日期定位
-    this.startTimeText.x = this.middleTexts[0].x - this.startTimeText.width - this.textWidth / 2
-    this.startTimeText.y = this.textPaddingY
-
-    this.baseStartX = this.headerWidth - this.textWidth / 2
-    this.baseEndX = this.baseStartX + this.textWidth * (this.middleTexts.length + 1)
-
+    this.baseStartX = this.textWidth - this.textWidth / 2
+    this.baseEndX = this.baseStartX + this.textWidth * (this.textList.length - 1)
     this.refreshText(...this.textList)
   }
 
   refreshText(...texts) {
-    this.children.forEach(child => {
-      if (child instanceof Text) {
-        child.removeChild(child)
-      }
-    })
-    this.addChild(...texts)
+    this.removeChildren()
+    this.addChild(this.centerLineGraphics, ...texts)
   }
 
   drawArrowLine() {
@@ -175,31 +158,23 @@ export default class DateLine extends BaseContainer {
     graphics.moveTo(this.lineWidth, this.lineBaseY)
     graphics.lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
 
-    this.middleTexts.forEach((text, index, arr) => {
+    this.textList.forEach(text => {
       const left = text.x + text.width / 2
-      if (index === 0) {
-        const firstLeft = left - this.textWidth
-        graphics.moveTo(firstLeft, this.lineBaseY)
-        graphics.lineTo(firstLeft, this.lineBaseY - this.scaleLine.status)
-      }
-      if (index === arr.length - 1) {
-        const lastLeft = left + this.textWidth
-        graphics.moveTo(lastLeft, this.lineBaseY)
-        graphics.lineTo(lastLeft, this.lineBaseY - this.scaleLine.status)
-      }
       graphics.moveTo(left, this.lineBaseY)
       graphics.lineTo(left, this.lineBaseY - this.scaleLine.status)
     })
-
-
-    // graphics.moveTo(this.baseEndX, 0)
-    // graphics.lineTo(this.canvasWidth, 0)
   }
 
   /**
    * @param {number} t 
    */
   update(t) {
+    this.textList.forEach((text, index) => {
+      const blockWidth = this.textWidth + this.textPaddingX * 2
+      const diffCenter = (blockWidth - text.width) / 2
+      text.x = this.lineWidth - blockWidth - (blockWidth * index) + diffCenter + this.translateX
+      text.y = this.textPaddingY
+    })
     this.centerLine.updateDate(t)
     this.scaleLine.updateDate(t)
   }
@@ -210,134 +185,142 @@ export default class DateLine extends BaseContainer {
 
   getTextWidth(font, fontSize) {
     const text = new Text(font, {
-      fontWeight: '700',
       fontFamily: this.fontFamily,
-      fontSize: fontSize + 2,
+      fontSize,
     })
     return text.width + this.textPaddingX * 2
   }
 
-  getTexts() {
+  getTextHeight(font, fontSize) {
+    const text = new Text(font, {
+      fontFamily: this.fontFamily,
+      fontSize,
+    })
+    return text.height + this.textPaddingY * 2
+  }
+
+  getDateValueList() {
+    const block = Math.floor(this.lineWidth / this.minTextWidth) + 1
+    return new Array(block).fill(null).map((_, index) => this.getDateValue(index))
+  }
+
+  getDateValue(index) {
+    return this.endTime - (this.getUnitValue(this.unit) * index)
+  }
+
+  getUnitValue(unit) {
+    const seconds = 1000
     const minute = 1000 * 60
     const hour = 1000 * 60 * 60
     const day = 1000 * 60 * 60 * 24
-    if (this.unit === TimeUnit.HALF_HOUR) {
-      return this.getDateTimeTexts(minute * 30, 'MM/DD HH:mm', 'HH:mm')
+    switch (unit) {
+      case TimeUnit.SECOND:
+        return seconds
+      case TimeUnit.MINUTE:
+        return minute
+      case TimeUnit.HALF_HOUR:
+        return minute * 30
+      case TimeUnit.HOUR:
+        return hour
+      case TimeUnit.HOUR12:
+        return hour * 12
+      case TimeUnit.DAY:
+        return day
+      case TimeUnit.DAY3:
+        return day * 3
+      case TimeUnit.WEEK:
+        return day * 7
+      case TimeUnit.HALF_MONTH:
+        return day * 15
+      case TimeUnit.MONTH:
+        return day * 30
+      case TimeUnit.QUARTER:
+        return day * 90
+      default:
+        return NaN
     }
-    if (this.unit === TimeUnit.HOUR) {
-      return this.getDateTimeTexts(hour, 'MM/DD HH:mm', 'HH:mm')
-    }
-    if (this.unit === TimeUnit.HOUR12) {
-      return this.getDateTimeTexts(hour * 12, 'YYYY/MM/DD HH:mm', 'HH:mm')
-    }
-    if (this.unit === TimeUnit.DAY) {
-      return this.getDateTimeTexts(day, 'YYYY/MM/DD', 'MM/DD')
-    }
-    if (this.unit === TimeUnit.DAY3) {
-      return this.getDateTimeTexts(day * 3, 'YYYY/MM/DD', 'MM/DD')
-    }
-    if (this.unit === TimeUnit.WEEK) {
-      return this.getDateTimeTexts(day * 7, 'YYYY/MM/DD', 'MM/DD')
-    }
-    if (this.unit === TimeUnit.HALF_MONTH) {
-      return this.getDateTimeTexts(day * 15, 'YYYY/MM/DD', 'MM/DD')
-    }
-    if (this.unit === TimeUnit.MONTH) {
-      return this.getMonthDateTimeTexts(1)
-    }
-    if (this.unit === TimeUnit.QUARTER) {
-      return this.getMonthDateTimeTexts(3)
-    }
-    const time = Number(this.unit)
-    if (time) {
-      return this.getDateTimeTexts(time, 'YYYY/MM/DD HH:mm', 'MM/DD HH:mm')
-    }
-    return []
   }
+
+  getUnitFormat(unit) {
+    switch (unit) {
+      case TimeUnit.SECOND:
+        return 'mm:ss'
+      case TimeUnit.MINUTE:
+        return 'HH:mm'
+      case TimeUnit.HALF_HOUR:
+        return 'HH:mm'
+      case TimeUnit.HOUR:
+        return 'HH:mm'
+      case TimeUnit.HOUR12:
+        return 'MM/DD HH:mm'
+      case TimeUnit.DAY:
+        return 'MM/DD'
+      case TimeUnit.DAY3:
+        return 'MM/DD'
+      case TimeUnit.WEEK:
+        return 'MM/DD'
+      case TimeUnit.HALF_MONTH:
+        return 'MM/DD'
+      case TimeUnit.MONTH:
+        return 'YYYY/MM'
+      case TimeUnit.QUARTER:
+        return 'YYYY/MM'
+      default:
+        return 'YYYY/MM/DD HH:mm:ss'
+    }
+  }
+
 
   /**
-   * 
-   * @param {number} time 
-   * @param {string} headerFormat
-   * @param {string} textFormat
+   * @param {string} text 
+   * @param {number} index 
    * @returns 
    */
-  getDateTimeTexts(time, headerFormat, textFormat) {
-    this.headerWidth = this.getTextWidth(headerFormat, this.fontSize + 2)
-    this.textWidth = this.getTextWidth(textFormat, this.fontSize)
-    const block = Math.floor((this.lineWidth - this.headerWidth * 2) / this.textWidth)
-    this.startTime = this.endTime - (block + 2) * time
-    let isMonth = false
-    let isYear = false
-    return new Array(block + 2).fill(null).map((_, index, arr) => {
-      const item = this.endTime - index * time
-      const prev = this.endTime - index * time - time
-      const isLast = arr.length - 1 === index
-      if (index === 0 || isLast) {
-        return new Text(dateFormat(item, headerFormat), {
-          fontWeight: '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize + 2,
-        })
-      }
-      if (new Date(item).getDay() !== new Date(prev).getDay()) {
-        return new Text(dateFormat(item, 'MM/DD'), {
-          fontWeight: isMonth ? '400' : '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize,
-          align: 'center'
-        })
-      }
-      if (new Date(item).getMonth() !== new Date(prev).getMonth()) {
-        isMonth = true
-        return new Text(dateFormat(item, 'MM/DD'), {
-          fontWeight: isYear ? '400' : '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize,
-        })
-      }
-      if (new Date(item).getFullYear() !== new Date(prev).getFullYear()) {
-        isYear = true
-        return new Text(dateFormat(item, 'YYYY/MM'), {
-          fontWeight: '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize,
-        })
-      }
-      return new Text(dateFormat(item, textFormat), {
+  getText(text, index) {
+    const unit = this.getUnitValue(this.unit)
+    const format = this.getUnitFormat(this.unit)
+    const current = this.dateList[index]
+    const prev = this.dateList[index - 1]
+    const next = this.dateList[index + 1]
+    const isLast = !prev
+    const isFirst = !next
+    if (isLast || isFirst) {
+      return new Text(dateFormat(text, format), {
         fontWeight: '400',
         fontFamily: this.fontFamily,
         fontSize: this.fontSize,
+        align: 'center'
       })
-    })
-  }
-
-  getMonthDateTimeTexts(time) {
-    this.textWidth = this.getTextWidth('YYYY/MM', this.fontSize)
-    this.headerWidth = this.getTextWidth('YYYY/MM', this.fontSize + 2)
-    const block = Math.floor((this.lineWidth - this.headerWidth * 2) / this.textWidth)
-    this.startTime = dateSubtract(this.endTime, (block + 2) * time, 'month').valueOf()
-    return new Array(block + 2).fill(null).map((_, index, arr) => {
-      const date = dateSubtract(this.endTime, index * time, 'month')
-      if (index === 0 || arr.length - 1 === index) {
-        return new Text(dateFormat(date, 'YYYY/MM'), {
-          fontWeight: '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize + 2,
-        })
-      }
-      if (date.getMonth() === 0) {
-        return new Text(dateFormat(date, 'YYYY/MM'), {
-          fontWeight: '700',
-          fontFamily: this.fontFamily,
-          fontSize: this.fontSize,
-        })
-      }
-      return new Text(dateFormat(date, 'YYYY/MM'), {
-        fontWeight: '400',
+    }
+    if (unit <= this.getUnitValue(TimeUnit.SECOND) && new Date(current).getHours() !== new Date(next).getHours()) {
+      return new Text(dateFormat(text, 'HH:mm:ss'), {
+        fontWeight: '700',
         fontFamily: this.fontFamily,
         fontSize: this.fontSize,
+        align: 'center'
       })
+    }
+    if (unit <= this.getUnitValue(TimeUnit.DAY) && new Date(current).getDay() !== new Date(next).getDay()) {
+      return new Text(dateFormat(text, 'MM/DD'), {
+        fontWeight: '700',
+        fontFamily: this.fontFamily,
+        fontSize: this.fontSize,
+        align: 'center'
+      })
+    }
+    if (new Date(current).getFullYear() !== new Date(next).getFullYear()) {
+      return new Text(dateFormat(text, 'YYYY/MM/DD'), {
+        fontWeight: '700',
+        fontFamily: this.fontFamily,
+        fontSize: this.fontSize,
+        align: 'center'
+      })
+    }
+    return new Text(dateFormat(text, format), {
+      fontWeight: '400',
+      fontFamily: this.fontFamily,
+      fontSize: this.fontSize,
+      align: 'center'
     })
   }
 }

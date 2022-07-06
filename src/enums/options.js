@@ -1,5 +1,7 @@
 /** @enum {string} */
 export const TimeUnit = {
+  SECOND: 'second',
+  MINUTE: 'minute',
   HALF_HOUR: 'halfHour',
   HOUR: 'hour',
   HOUR12: 'hour12',
