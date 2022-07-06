@@ -109,7 +109,7 @@ export class TimeMatrix {
    * @param {ITimeLimeChartModel[]} list
    * @returns {MatrixInfo[]}
    */
-  static getInfo(list, collapse = true) {
+  static getInfo(list) {
     const matrix = []
     return list.map(model => {
       const value = model.startTime + '-' + model.endTime
@@ -118,12 +118,7 @@ export class TimeMatrix {
       while (true) {
         const matrixRow = matrix[row]
         if (matrixRow) {
-          if (collapse) {
-            column = TimeMatrix.addMatrix(matrixRow, value)
-          } else {
-            column = 0
-            matrixRow.push(value)
-          }
+          column = TimeMatrix.addMatrix(matrixRow, value)
           if (column >= 0) {
             break
           }

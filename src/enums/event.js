@@ -3,6 +3,7 @@
  */
 export const EventType = {
   DRAGMOVE: 'dragmove',
+  SCALEMOVE: 'scalemove',
   MOUSEDOWN: 'mousedown',
   MOUSEMOVE: 'mousemove',
   MOUSEOUT: 'mouseout',

@@ -2,6 +2,7 @@ import {
   Container,
   Graphics
 } from '@base/pixi';
+import DynamicProperties from './dynamic-properties'
 
 export default class BaseContainer extends Container {
   constructor(args) {
@@ -12,6 +13,7 @@ export default class BaseContainer extends Container {
       y,
       canvasWidth,
       canvasHeight,
+      event
     } = args
     /** @type {() => Application} */
     this.getApplication = () => app;
@@ -20,9 +22,13 @@ export default class BaseContainer extends Container {
     /** @type {number} */
     if (y) this.y = y
     /** @type {number} */
-    this.baseWidth = canvasWidth;
+    this.canvasWidth = canvasWidth;
     /** @type {number} */
-    this.baseHeight = canvasHeight;
+    this.canvasHeight = canvasHeight;
+    /** @type {IDynamicProperties[]} */
+    this.properties = []
+    /** @type {import('eventemitter2').EventEmitter2} */
+    this.event = event
   }
 
   /**
@@ -37,6 +43,33 @@ export default class BaseContainer extends Container {
   setAttribute(key, value) {
     this[key] = value
     this.init()
+  }
+
+  /**
+   * @param {IDynamicProperties[]} items
+   * @return {number}
+   */
+  addProperties(...items) {
+    let length = 0
+    items.forEach((el) => {
+      if (el instanceof DynamicProperties) {
+        length = this.properties.push(el)
+      }
+    })
+    return length
+  }
+
+  /**
+   * @param {IDynamicProperties[]} items
+   */
+  refreshProperties(...items) {
+    const list = []
+    items.forEach((el) => {
+      if (el instanceof DynamicProperties) {
+        list.push(el)
+      }
+    })
+    this.properties = list
   }
 
   create() {
@@ -63,6 +96,11 @@ export default class BaseContainer extends Container {
       }
       if (child instanceof BaseContainer) {
         child.tickerRender(t)
+      }
+    })
+    this.properties.forEach((property) => {
+      if (property instanceof DynamicProperties) {
+        property.updateDate(t)
       }
     })
     this.update(t)

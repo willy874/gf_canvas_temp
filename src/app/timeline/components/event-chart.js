@@ -1,3 +1,4 @@
+/** @typedef {import('@base/enums').TimeUnit} TimeUnit */
 import BaseContainer from '@base/components/base-container'
 import ChartGroup from './chart-group'
 import {
@@ -9,22 +10,21 @@ export default class EventChart extends BaseContainer {
     super(args)
     const {
       isInit,
-      startTime,
-      endTime,
-      effectWidth,
       types,
-      colors
+      unit,
+      DateLine,
+      colors,
     } = args;
+    /** @type {number} */
+    this.y = DateLine.y + DateLine.lineBaseY
     /** @type {boolean} */
     this.isInit = isInit
-    /** @type {number} */
-    this.startTime = startTime;
-    /** @type {number} */
-    this.endTime = endTime;
-    /** @type {number} */
-    this.effectWidth = effectWidth;
+    /** @type {TimeUnit|number} */
+    this.unit = unit
     /** @type {IEventTypeModel[]} */
     this.types = types;
+    /** @type {import('./dateline').default} */
+    this.DateLine = DateLine;
     /** @type {number[]} */
     this.colors = colors;
 
@@ -32,18 +32,23 @@ export default class EventChart extends BaseContainer {
     this.create()
   }
 
+  getColor(index) {
+    return this.colors[index % this.colors.length]
+  }
+
   getCharGroup() {
     return this.types.filter(m => m.data.length).map((model, index) => {
       return new ChartGroup({
         isInit: this.isInit,
         app: this.getApplication(),
+        unit: this.unit,
+        canvasWidth: this.canvasWidth,
+        canvasHeight: this.canvasHeight,
+        event: this.event,
         model,
         sort: index,
-        color: this.colors[index % this.colors.length],
-        effectWidth: this.effectWidth,
-        basePixelTime: (this.endTime - this.startTime) / this.effectWidth,
-        baseStartTime: this.startTime,
-        baseEndTime: this.endTime
+        color: this.getColor(index),
+        DateLine: this.DateLine,
       })
     })
   }

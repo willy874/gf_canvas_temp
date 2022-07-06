@@ -4,8 +4,11 @@ import {
 import {
   easeInSine,
 } from '@base/utils';
+// import {
+//   EventType
+// } from '@base/enums'
 import BaseContainer from '@base/components/base-container'
-import DynamicProperties from './dynamic-properties'
+import DynamicProperties from '@base/components/dynamic-properties'
 
 export default class ChartItem extends BaseContainer {
   constructor(args) {
@@ -20,9 +23,7 @@ export default class ChartItem extends BaseContainer {
       endTime,
       title,
       type,
-      basePixelTime,
-      baseStartTime,
-      baseEndTime
+      DateLine
     } = args;
     /** @type {boolean} */
     this.isInit = isInit
@@ -42,16 +43,14 @@ export default class ChartItem extends BaseContainer {
     this.title = title
     /** @type {string} */
     this.type = type
-    /** @type {number} */
-    this.basePixelTime = basePixelTime
-    /** @type {number} */
-    this.baseStartTime = baseStartTime;
-    /** @type {number} */
-    this.baseEndTime = baseEndTime;
+    /** @type {import('./dateline').default} */
+    this.DateLine = DateLine;
 
+    /** @type {Graphics} */
     this.graphics = new Graphics()
     this.buttonMode = true
     if (this.isInit) {
+      /** @type {IDynamicProperties} */
       this.widthInfo = new DynamicProperties({
         current: this.graphics,
         target: this.getChartWidth(),
@@ -59,25 +58,36 @@ export default class ChartItem extends BaseContainer {
         timingFunction: easeInSine,
       })
     } else {
+      /** @type {IDynamicProperties} */
       this.widthInfo = new DynamicProperties({
         current: this.graphics,
         status: this.getChartWidth(),
       })
     }
+    /** @type {IDynamicProperties} */
     this.heightInfo = new DynamicProperties({
       current: this.graphics,
       status: 2,
     })
+    /** @type {IDynamicProperties} */
     this.leftInfo = new DynamicProperties({
       current: this.graphics,
       status: this.getChartLeft(),
     })
+    /** @type {IDynamicProperties} */
     this.topInfo = new DynamicProperties({
       current: this.graphics,
       status: this.getChartTop(),
     })
     this.create()
     this.addChild(this.graphics)
+    // 目前不需要 this.heightInfo, this.leftInfo, this.topInfo
+    this.addProperties(this.widthInfo)
+    // this.event.on(EventType.SCALEMOVE, (e) => this.onScaledMove(e))
+  }
+
+  onScaledMove(event) {
+
   }
 
   getCurrentBoxInfo() {
@@ -91,12 +101,15 @@ export default class ChartItem extends BaseContainer {
 
   getChartWidth() {
     const rangeTime = this.endTime - this.startTime
-    return Math.floor(rangeTime / this.basePixelTime) || 2
+    const width = Math.floor(rangeTime / this.DateLine.basePixelTime)
+    return Math.max(width, 2)
   }
 
   getChartLeft() {
-    const baseTime = this.startTime - this.baseStartTime
-    return Math.floor(baseTime / this.basePixelTime)
+    const rangeTime = this.DateLine.baseTime - this.startTime
+    const diff = Math.floor(rangeTime / this.DateLine.basePixelTime)
+    const left = this.DateLine.baseX - diff
+    return left
   }
 
   getChartTop() {
@@ -109,13 +122,6 @@ export default class ChartItem extends BaseContainer {
     graphics.drawRect(0, 0, this.widthInfo.status, this.heightInfo.status + 16)
     graphics.beginFill(this.color)
     graphics.drawRect(0, 8, this.widthInfo.status, this.heightInfo.status)
-  }
-
-  /**
-   * @param {number} t 
-   */
-  update(t) {
-    this.widthInfo.updateDate(t)
   }
 
   draw() {

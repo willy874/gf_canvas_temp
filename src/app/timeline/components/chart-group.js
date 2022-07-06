@@ -15,10 +15,7 @@ export default class ChartGroup extends BaseContainer {
       model,
       sort,
       color,
-      effectWidth,
-      basePixelTime,
-      baseStartTime,
-      baseEndTime
+      DateLine,
     } = args;
     /** @type {boolean} */
     this.isInit = isInit
@@ -28,14 +25,8 @@ export default class ChartGroup extends BaseContainer {
     this.sort = sort;
     /** @type {number} */
     this.color = color;
-    /** @type {number} */
-    this.effectWidth = effectWidth;
-    /** @type {number} */
-    this.basePixelTime = basePixelTime;
-    /** @type {number} */
-    this.baseStartTime = baseStartTime;
-    /** @type {number} */
-    this.baseEndTime = baseEndTime;
+    /** @type {import('./dateline').default} */
+    this.DateLine = DateLine;
 
     this.graphics = new Graphics()
     this.create()
@@ -49,17 +40,16 @@ export default class ChartGroup extends BaseContainer {
 
   getCharItem() {
     /** @type {MatrixInfo[]} */
-    const matrixInfoList = TimeMatrix.getInfo(this.model.data, this.model.collapse)
+    const matrixInfoList = TimeMatrix.getInfo(this.model.data)
     return this.model.data.map((model, index) => {
       const matrixInfo = matrixInfoList[index]
       return new ChartItem({
         isInit: this.isInit,
         app: this.getApplication(),
+        event: this.event,
         type: this.model.name,
-        basePixelTime: this.basePixelTime,
-        baseStartTime: this.baseStartTime,
-        baseEndTime: this.baseEndTime,
         color: this.color,
+        DateLine: this.DateLine,
         ...model,
         ...matrixInfo
       })
@@ -72,15 +62,16 @@ export default class ChartGroup extends BaseContainer {
   update(t) {}
 
   draw() {
+
     if (this.sort) {
       this.graphics.lineStyle(1, 0xEEEEEE)
       this.graphics.moveTo(0, 0)
-      this.graphics.lineTo(this.effectWidth, 0)
+      this.graphics.lineTo(this.canvasWidth, 0)
     }
     this.children.forEach(container => {
       if (container instanceof ChartItem) {
         const box = container.getCurrentBoxInfo()
-        container.x = box.left
+        container.x = box.left + this.DateLine.translateX
         container.y = box.top
       }
     })

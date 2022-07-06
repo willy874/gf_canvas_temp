@@ -4,6 +4,8 @@ import {
 } from '@base/pixi';
 import {
   dateFormat,
+  getUnitValue,
+  getUnitFormat
 } from '@base/utils'
 import {
   FontFamily,
@@ -12,7 +14,7 @@ import {
   EventType
 } from '@base/enums'
 import BaseContainer from '@base/components/base-container'
-import DynamicProperties from './dynamic-properties'
+import DynamicProperties from '@base/components/dynamic-properties'
 
 
 export default class DateLine extends BaseContainer {
@@ -28,15 +30,17 @@ export default class DateLine extends BaseContainer {
       textPaddingY,
       unit,
       translateX,
-      translateY,
       fontFamily,
-      event
     } = args;
     // === Props Attribute
     /** @type {number} */
     this.canvasWidth = canvasWidth;
     /** @type {number} */
     this.canvasHeight = canvasHeight;
+    /** @type {number|string} */
+    this.unit = unit
+    /** @type {number} */
+    this.translateX = translateX
     /** @type {number} */
     this.fontSize = fontSize || FontSize.SMALL;
     /** @type {string} */
@@ -47,17 +51,19 @@ export default class DateLine extends BaseContainer {
     this.textPaddingX = textPaddingX
     /** @type {number} */
     this.textPaddingY = textPaddingY
-    /** @type {number|string} */
-    this.unit = unit
-    /** @type {number} */
-    this.translateX = translateX
-    /** @type {number} */
-    this.translateY = translateY
-    /** @type {import('eventemitter2').EventEmitter2} */
-    this.event = event
     // === Base Attribute
     /** @type {number} */
     this.scaleHeight = 6
+    /** @type {number} */
+    this.scaleWidth = 2
+    /** @type {number} */
+    this.subScaleHeight = 4
+    /** @type {number} */
+    this.subScaleWidth = 1
+    /** @type {number[]} */
+    this.scaleLeftList = []
+    /** @type {number} */
+    this.scaleSpaceWidth = 0
     /** @type {number} */
     this.lineWidth = this.canvasWidth - this.x * 2
     /** @type {number} */
@@ -65,29 +71,27 @@ export default class DateLine extends BaseContainer {
     /** @type {number} */
     this.maxTextWidth = this.getTextWidth('YYYY/MM/DD', this.fontSize)
     /** @type {number} */
-    this.maxTextHeight = this.getTextHeight('YYYY/MM/DD\nHH:mm:ss', this.fontSize)
-    /** @type {number} */
     this.textWidth = 0
+    /** @type {number} 取得每 px 代表的時間長度 */
+    this.basePixelTime = this.getPixelTime()
     /** @type {number} */
     this.textTotalWidth = 0
     /** @type {number} */
     this.lineBaseY = 0
     /** @type {number} */
-    this.baseStartX = 0
+    this.baseX = 0
     /** @type {number} */
-    this.baseEndX = 0
-    /** @type {number} */
-    this.startTime = 0
-    /** @type {number} */
-    this.endTime = 0
-    /** @type {Text} */
-    this.startTimeText = null
+    this.baseTime = Date.now()
     /** @type {Text} */
     this.endTimeText = null
+    /** @type {number[]} */
+    this.dateList = []
+    /** @type {number[]} */
+    this.textWidthList = []
+    /** @type {number[]} */
+    this.textLeftList = []
     /** @type {Text[]} */
     this.textList = []
-    /** @type {Text[]} */
-    this.reverseTextList = []
     /** @type {Graphics} */
     this.centerLineGraphics = new Graphics()
     /** @type {IDynamicProperties} */
@@ -96,24 +100,41 @@ export default class DateLine extends BaseContainer {
     })
     /** @type {IDynamicProperties} */
     this.scaleLine = new DynamicProperties()
+    /** @type {IDynamicProperties} */
+    this.subScaleLine = new DynamicProperties()
 
     // Center Line
     if (isInit) {
       this.centerLine.toTarget(this.x + this.lineWidth / 2, 1000).then(() => {
-        this.scaleLine.toTarget(this.scaleHeight, 300)
+        this.scaleLine.toTarget(this.scaleHeight, 300).then(() => {
+          this.subScaleLine.toTarget(this.subScaleHeight, 300)
+        })
       })
     }
 
     this.event.on(EventType.DRAGMOVE, (e) => this.onDragmove(e))
     this.addChild(this.centerLineGraphics)
+    this.addProperties(this.centerLine, this.scaleLine, this.subScaleLine)
     this.create()
   }
 
   onDragmove(event) {
-    if (this.translateX + event.moveX >= 0) {
-      this.translateX = this.translateX + event.moveX
+    const left = this.translateX + event.moveX
+    if (left >= 0) {
+      this.translateX = left
+      this.event.emit(EventType.SCALEMOVE, event)
     }
     this.textUpdate()
+  }
+
+  textListDependSync() {
+    if (this.textList.length) {
+      this.endTimeText = this.textList[0]
+      this.textWidthList = this.textList.map(text => text.width)
+      this.textWidth = Math.max(...this.textWidthList)
+      this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
+      this.lineBaseY = Math.max(...this.textList.map(t => t.height)) + this.scaleHeight + this.textPaddingY * 2
+    }
   }
 
   textUpdate() {
@@ -123,26 +144,25 @@ export default class DateLine extends BaseContainer {
       const text = this.getText(dateFormat(this.dateList[index], 'YYYY/MM/DD HH:mm:ss'), index)
       this.textList.push(text)
       this.addChild(text)
-      this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
+      this.textListDependSync()
     }
+    this.textLeftList = this.textList.map((text, index) => this.getTextLeft(text, index))
+    this.updateTextsPosition()
+    /** 需要實際取位置，所以要先進行文字定位設置 */
+    this.scaleLeftList = this.textList.map(text => text.x + text.width / 2)
+    this.baseX = this.scaleLeftList[0]
+    this.scaleSpaceWidth = this.baseX - this.scaleLeftList[1]
+    this.basePixelTime = this.getPixelTime()
   }
 
   init() {
-    this.endTime = Date.now()
     this.dateList = this.getDateValueList()
     this.textList = this.dateList.map(time => dateFormat(time, 'YYYY/MM/DD HH:mm:ss')).map((text, index) => this.getText(text, index))
-    this.dateList.push(this.getDateValue(this.dateList.length))
-    const textWidthList = this.textList.map(text => text.width)
-    this.textWidth = textWidthList.length ? Math.max(...textWidthList) : this.minTextWidth
-    this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
-    this.textUpdate()
-    if (this.textList.length) {
-      this.lineBaseY = Math.max(...this.textList.map(t => t.height)) + this.scaleHeight + this.textPaddingY * 2
-    } else {
-      this.lineBaseY = this.scaleHeight + this.textPaddingY * 2
+    if (this.dateList.length <= this.textList.length) {
+      this.dateList.push(this.getDateValue(this.dateList.length))
     }
-    this.baseStartX = this.textWidth - this.textWidth / 2
-    this.baseEndX = this.baseStartX + this.textWidth * (this.textList.length - 1)
+    this.textListDependSync()
+    this.textUpdate()
     this.refreshText(...this.textList)
   }
 
@@ -153,18 +173,22 @@ export default class DateLine extends BaseContainer {
 
   drawArrowLine() {
     const graphics = this.centerLineGraphics
+    // centerLine
     graphics.lineStyle(this.lineSolidWidth)
-
     graphics.moveTo(0, this.lineBaseY)
     graphics.lineTo(this.centerLine.status, this.lineBaseY)
-
     graphics.moveTo(this.lineWidth, this.lineBaseY)
     graphics.lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
-
+    // scaleLine
     this.textList.forEach(text => {
       const left = text.x + text.width / 2
+      graphics.lineStyle(this.scaleWidth)
       graphics.moveTo(left, this.lineBaseY)
       graphics.lineTo(left, this.lineBaseY - this.scaleLine.status)
+      const subLeft = left - this.textWidth / 2 - this.textPaddingX
+      graphics.lineStyle(this.subScaleWidth)
+      graphics.moveTo(subLeft, this.lineBaseY)
+      graphics.lineTo(subLeft, this.lineBaseY - this.subScaleLine.status)
     })
   }
 
@@ -172,20 +196,62 @@ export default class DateLine extends BaseContainer {
    * @param {number} t 
    */
   update(t) {
-    this.textList.forEach((text, index) => {
-      const blockWidth = this.textWidth + this.textPaddingX * 2
-      const diffCenter = (blockWidth - text.width) / 2
-      text.x = this.lineWidth - blockWidth - (blockWidth * index) + diffCenter + this.translateX
-      text.y = this.textPaddingY
-    })
-    this.centerLine.updateDate(t)
-    this.scaleLine.updateDate(t)
+    this.updateTextsPosition()
   }
 
   draw() {
     this.drawArrowLine()
   }
 
+  /**
+   * @dependency
+   * ```
+   * unit, scaleSpaceWidth
+   * ```
+   * @returns {number}
+   */
+  getPixelTime() {
+    return getUnitValue(this.unit) / this.scaleSpaceWidth
+  }
+
+  /**
+   * @dependency
+   * ```
+   * textList, textPaddingY
+   * ```
+   */
+  updateTextsPosition() {
+    this.textLeftList.forEach((left, index) => {
+      const text = this.textList[index]
+      text.x = left
+      text.y = this.textPaddingY
+    })
+  }
+
+  /**
+   * @param {Text} text 
+   * @param {number} index 
+   * @returns {number}
+   * @dependency
+   * ```
+   * textWidth, textPaddingX, lineWidth, translateX
+   * ```
+   */
+  getTextLeft(text, index) {
+    const blockWidth = this.textWidth + this.textPaddingX * 2
+    const diffCenter = (blockWidth - text.width) / 2
+    return this.lineWidth - blockWidth - (blockWidth * index) + diffCenter + this.translateX
+  }
+
+  /**
+   * @param {string} font 
+   * @param {number} fontSize 
+   * @returns {number}
+   * @dependency
+   * ```
+   * fontFamily, textPaddingX
+   * ```
+   */
   getTextWidth(font, fontSize) {
     const text = new Text(font, {
       fontFamily: this.fontFamily,
@@ -194,94 +260,42 @@ export default class DateLine extends BaseContainer {
     return text.width + this.textPaddingX * 2
   }
 
-  getTextHeight(font, fontSize) {
-    const text = new Text(font, {
-      fontFamily: this.fontFamily,
-      fontSize,
-    })
-    return text.height + this.textPaddingY * 2
-  }
-
+  /**
+   * @returns {number[]}
+   * @dependency
+   * ```
+   * lineWidth, minTextWidth, baseTime, unit
+   * ```
+   */
   getDateValueList() {
     const block = Math.floor(this.lineWidth / this.minTextWidth) + 1
     return new Array(block).fill(null).map((_, index) => this.getDateValue(index))
   }
 
+  /**
+   * @param {number} index 
+   * @returns {number}
+   * @dependency
+   * ```
+   * unit, baseTime
+   * ```
+   */
   getDateValue(index) {
-    return this.endTime - (this.getUnitValue(this.unit) * index)
+    return this.baseTime - (getUnitValue(this.unit) * index)
   }
-
-  getUnitValue(unit) {
-    const seconds = 1000
-    const minute = 1000 * 60
-    const hour = 1000 * 60 * 60
-    const day = 1000 * 60 * 60 * 24
-    switch (unit) {
-      case TimeUnit.SECOND:
-        return seconds
-      case TimeUnit.MINUTE:
-        return minute
-      case TimeUnit.HALF_HOUR:
-        return minute * 30
-      case TimeUnit.HOUR:
-        return hour
-      case TimeUnit.HOUR12:
-        return hour * 12
-      case TimeUnit.DAY:
-        return day
-      case TimeUnit.DAY3:
-        return day * 3
-      case TimeUnit.WEEK:
-        return day * 7
-      case TimeUnit.HALF_MONTH:
-        return day * 15
-      case TimeUnit.MONTH:
-        return day * 30
-      case TimeUnit.QUARTER:
-        return day * 90
-      default:
-        return NaN
-    }
-  }
-
-  getUnitFormat(unit) {
-    switch (unit) {
-      case TimeUnit.SECOND:
-        return 'mm:ss'
-      case TimeUnit.MINUTE:
-        return 'HH:mm'
-      case TimeUnit.HALF_HOUR:
-        return 'HH:mm'
-      case TimeUnit.HOUR:
-        return 'HH:mm'
-      case TimeUnit.HOUR12:
-        return 'MM/DD HH:mm'
-      case TimeUnit.DAY:
-        return 'MM/DD'
-      case TimeUnit.DAY3:
-        return 'MM/DD'
-      case TimeUnit.WEEK:
-        return 'MM/DD'
-      case TimeUnit.HALF_MONTH:
-        return 'MM/DD'
-      case TimeUnit.MONTH:
-        return 'YYYY/MM'
-      case TimeUnit.QUARTER:
-        return 'YYYY/MM'
-      default:
-        return 'YYYY/MM/DD HH:mm:ss'
-    }
-  }
-
 
   /**
    * @param {string} text 
    * @param {number} index 
-   * @returns 
+   * @returns {Text}
+   * @dependency
+   * ```
+   * unit, dateList, fontFamily, fontSize
+   * ```
    */
   getText(text, index) {
-    const unit = this.getUnitValue(this.unit)
-    const format = this.getUnitFormat(this.unit)
+    const unit = getUnitValue(this.unit)
+    const format = getUnitFormat(this.unit)
     const current = this.dateList[index]
     const prev = this.dateList[index - 1]
     const next = this.dateList[index + 1]
@@ -295,7 +309,7 @@ export default class DateLine extends BaseContainer {
         align: 'center'
       })
     }
-    if (unit <= this.getUnitValue(TimeUnit.SECOND) && new Date(current).getHours() !== new Date(next).getHours()) {
+    if (unit <= getUnitValue(TimeUnit.SECOND) && new Date(current).getHours() !== new Date(next).getHours()) {
       return new Text(dateFormat(text, 'HH:mm:ss'), {
         fontWeight: '700',
         fontFamily: this.fontFamily,
@@ -303,7 +317,7 @@ export default class DateLine extends BaseContainer {
         align: 'center'
       })
     }
-    if (unit <= this.getUnitValue(TimeUnit.DAY) && new Date(current).getDay() !== new Date(next).getDay()) {
+    if (unit <= getUnitValue(TimeUnit.DAY) && new Date(current).getDay() !== new Date(next).getDay()) {
       return new Text(dateFormat(text, 'MM/DD'), {
         fontWeight: '700',
         fontFamily: this.fontFamily,
@@ -312,7 +326,7 @@ export default class DateLine extends BaseContainer {
       })
     }
     if (new Date(current).getFullYear() !== new Date(next).getFullYear()) {
-      return new Text(dateFormat(text, 'YYYY/MM/DD'), {
+      return new Text(dateFormat(text, 'YYYY/MM'), {
         fontWeight: '700',
         fontFamily: this.fontFamily,
         fontSize: this.fontSize,

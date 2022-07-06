@@ -30,8 +30,6 @@ export default class TimelineApplication {
     this.isMouseDown = false
     /** @type {number} */
     this.translateX = 0
-    /** @type {number} */
-    this.translateY = 0
 
     this.app = new Application({
       width: this.options.width,
@@ -71,11 +69,10 @@ export default class TimelineApplication {
       isInit,
       app: this.app,
       unit: this.options.unit,
-      translateX: 0,
-      translateY: 0,
       canvasWidth: this.options.width,
       canvasHeight: this.options.height,
       event: this.root.event,
+      translateX: this.translateX,
       fontSize: FontSize.SMALL,
       lineSolidWidth: 1,
       textPaddingX: 4,
@@ -98,16 +95,14 @@ export default class TimelineApplication {
     }
     return new EventChart({
       isInit,
-      app: this.app,
-      startTime: this.dateLine.startTime,
-      endTime: this.dateLine.endTime,
-      effectWidth: this.dateLine.baseEndX - this.dateLine.baseStartX,
-      x: this.dateLine.baseStartX,
-      y: this.dateLine.y + this.dateLine.lineBaseY,
       canvasWidth: this.options.width,
       canvasHeight: this.options.height,
-      types: this.options.types,
       event: this.root.event,
+      types: this.options.types,
+      app: this.app,
+      DateLine: this.dateLine,
+      unit: this.options.unit,
+      translateX: this.translateX,
       colors: [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF],
     })
   }
