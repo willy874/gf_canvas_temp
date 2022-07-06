@@ -8,12 +8,15 @@ export default class EventChart extends BaseContainer {
   constructor(args) {
     super(args)
     const {
+      isInit,
       startTime,
       endTime,
       effectWidth,
       types,
       colors
     } = args;
+    /** @type {boolean} */
+    this.isInit = isInit
     /** @type {number} */
     this.startTime = startTime;
     /** @type {number} */
@@ -32,6 +35,7 @@ export default class EventChart extends BaseContainer {
   getCharGroup() {
     return this.types.filter(m => m.data.length).map((model, index) => {
       return new ChartGroup({
+        isInit: this.isInit,
         app: this.getApplication(),
         model,
         sort: index,

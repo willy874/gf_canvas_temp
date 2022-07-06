@@ -19,6 +19,7 @@ export default class DateLine extends BaseContainer {
   constructor(args) {
     super(args)
     const {
+      isInit,
       canvasWidth,
       canvasHeight,
       fontSize,
@@ -97,9 +98,11 @@ export default class DateLine extends BaseContainer {
     this.scaleLine = new DynamicProperties()
 
     // Center Line
-    this.centerLine.toTarget(this.x + this.lineWidth / 2, 1000).then(() => {
-      this.scaleLine.toTarget(this.scaleHeight, 300)
-    })
+    if (isInit) {
+      this.centerLine.toTarget(this.x + this.lineWidth / 2, 1000).then(() => {
+        this.scaleLine.toTarget(this.scaleHeight, 300)
+      })
+    }
 
     this.event.on(EventType.DRAGMOVE, (e) => this.onDragmove(e))
     this.addChild(this.centerLineGraphics)

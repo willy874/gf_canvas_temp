@@ -11,6 +11,7 @@ export default class ChartGroup extends BaseContainer {
   constructor(args) {
     super(args)
     const {
+      isInit,
       model,
       sort,
       color,
@@ -19,6 +20,8 @@ export default class ChartGroup extends BaseContainer {
       baseStartTime,
       baseEndTime
     } = args;
+    /** @type {boolean} */
+    this.isInit = isInit
     /** @type {IEventTypeModel} */
     this.model = model;
     /** @type {number} */
@@ -50,6 +53,7 @@ export default class ChartGroup extends BaseContainer {
     return this.model.data.map((model, index) => {
       const matrixInfo = matrixInfoList[index]
       return new ChartItem({
+        isInit: this.isInit,
         app: this.getApplication(),
         type: this.model.name,
         basePixelTime: this.basePixelTime,

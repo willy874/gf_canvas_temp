@@ -11,7 +11,7 @@ export default class ChartItem extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      model,
+      isInit,
       color,
       column,
       row,
@@ -24,8 +24,8 @@ export default class ChartItem extends BaseContainer {
       baseStartTime,
       baseEndTime
     } = args;
-
-    this.model = model
+    /** @type {boolean} */
+    this.isInit = isInit
     /** @type {number} */
     this.color = color
     /** @type {number} */
@@ -51,12 +51,19 @@ export default class ChartItem extends BaseContainer {
 
     this.graphics = new Graphics()
     this.buttonMode = true
-    this.widthInfo = new DynamicProperties({
-      current: this.graphics,
-      target: this.getChartWidth(),
-      duration: 1000,
-      timingFunction: easeInSine,
-    })
+    if (this.isInit) {
+      this.widthInfo = new DynamicProperties({
+        current: this.graphics,
+        target: this.getChartWidth(),
+        duration: 1000,
+        timingFunction: easeInSine,
+      })
+    } else {
+      this.widthInfo = new DynamicProperties({
+        current: this.graphics,
+        status: this.getChartWidth(),
+      })
+    }
     this.heightInfo = new DynamicProperties({
       current: this.graphics,
       status: 2,

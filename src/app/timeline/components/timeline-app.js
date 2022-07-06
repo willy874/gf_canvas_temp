@@ -57,7 +57,7 @@ export default class TimelineApplication {
     })
   }
 
-  createDateLine() {
+  createDateLine(isInit = true) {
     if (!this.app) {
       throw new Error('Application is not defined.')
     }
@@ -68,6 +68,7 @@ export default class TimelineApplication {
       throw new Error('RootContainer is not defined.')
     }
     return new DateLine({
+      isInit,
       app: this.app,
       unit: this.options.unit,
       translateX: 0,
@@ -82,7 +83,7 @@ export default class TimelineApplication {
     })
   }
 
-  createEventChart() {
+  createEventChart(isInit = true) {
     if (!this.app) {
       throw new Error('Application is not defined.')
     }
@@ -96,6 +97,7 @@ export default class TimelineApplication {
       throw new Error('RootContainer is not defined.')
     }
     return new EventChart({
+      isInit,
       app: this.app,
       startTime: this.dateLine.startTime,
       endTime: this.dateLine.endTime,
