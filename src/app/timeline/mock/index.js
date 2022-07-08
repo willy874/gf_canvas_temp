@@ -50,7 +50,7 @@ function handleEventData(args) {
             ...event,
             title: attack.event_id,
             startTime: new Date(event.attackStartTime).valueOf(),
-            endTime: new Date(event.attackStartTime).valueOf() + 1000 * 60 * 60,
+            endTime: new Date(event.attackStartTime).valueOf() + 1,
           }
         })
       }

@@ -89,6 +89,9 @@ export class TimeMatrix {
   static addMatrix(matrix, value) {
     let insertIndex = -1
     for (let index = 0; index < matrix.length; index++) {
+      if (matrix[index] === value) {
+        return insertIndex
+      }
       if (TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value)) {
         insertIndex = index
         break

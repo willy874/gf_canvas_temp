@@ -4,6 +4,12 @@ import ChartGroup from './chart-group'
 import {
   Graphics,
 } from '@base/pixi';
+import {
+  GlobalEvent
+} from '@base/utils';
+import {
+  EventType
+} from '@base/enums';
 
 export default class EventChart extends BaseContainer {
   constructor(args) {
@@ -15,6 +21,8 @@ export default class EventChart extends BaseContainer {
       DateLine,
       colors,
     } = args;
+
+    // === Props Attribute ===
     /** @type {number} */
     this.y = DateLine.y + DateLine.lineBaseY + 16
     /** @type {boolean} */
@@ -28,8 +36,24 @@ export default class EventChart extends BaseContainer {
     /** @type {number[]} */
     this.colors = colors;
 
+    // === Base Attribute ===
+    /** @type {number} */
+    this.translateY = 0;
+
+    GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onPointmove(e))
+
     this.graphics = new Graphics()
     this.create()
+  }
+
+  /**
+   * @param {PointerEvent} event 
+   */
+  onPointmove(event) {
+    const top = this.translateY + event.movementY
+    if (top <= 0) {
+      this.translateY = top
+    }
   }
 
   getColor(index) {
@@ -44,7 +68,6 @@ export default class EventChart extends BaseContainer {
         unit: this.unit,
         canvasWidth: this.canvasWidth,
         canvasHeight: this.canvasHeight,
-        event: this.event,
         model,
         sort: index,
         color: this.getColor(index),
@@ -56,11 +79,16 @@ export default class EventChart extends BaseContainer {
   init() {
     const children = this.getCharGroup()
     this.refreshChildren(...children)
+  }
+
+  update(t) {
     // 計算群組高度給予碰撞
-    let y = 0
-    children.forEach((child) => {
-      child.y = y
-      y += child.height
+    let y = this.translateY
+    this.children.forEach(container => {
+      if (container instanceof ChartGroup) {
+        container.y = y
+        y += container.height
+      }
     })
   }
 }

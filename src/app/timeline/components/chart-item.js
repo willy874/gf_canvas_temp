@@ -9,6 +9,9 @@ import DynamicProperties from '@base/components/dynamic-properties'
 import {
   Coordinate
 } from './coordinate';
+import {
+  EventType
+} from '@base/enums';
 
 export default class ChartItem extends BaseContainer {
   constructor(args) {
@@ -63,22 +66,17 @@ export default class ChartItem extends BaseContainer {
     /** @type {Graphics} */
     this.graphics = new Graphics()
     /** @type {IDynamicProperties} */
-    this.widthInfo = new DynamicProperties({
-      current: this.graphics,
-    })
+    this.widthInfo = new DynamicProperties({})
     /** @type {IDynamicProperties} */
     this.heightInfo = new DynamicProperties({
-      current: this.graphics,
       status: 2,
     })
     /** @type {IDynamicProperties} */
     this.leftInfo = new DynamicProperties({
-      current: this.graphics,
       status: this.getChartLeft(),
     })
     /** @type {IDynamicProperties} */
     this.topInfo = new DynamicProperties({
-      current: this.graphics,
       status: this.getChartTop(),
     })
 
@@ -92,37 +90,34 @@ export default class ChartItem extends BaseContainer {
     this.endCoordinate = new Coordinate({
       app: this.getApplication(),
       isInit,
+      event,
       color,
       model,
       currentTime: startTime
     })
-    /** @type {IDynamicProperties} */
-    this.coordinateTop = new DynamicProperties()
 
     if (this.isInit) {
       this.widthInfo.toTarget(this.getChartWidth(), 1000).then(() => {
         this.endCoordinate.alpha = 1
         this.startCoordinate.alpha = 1
-        this.coordinateTop.toTarget(20, 500)
       })
     } else {
       this.widthInfo.toTarget(this.getChartWidth(), 0)
       this.endCoordinate.alpha = 1
       this.startCoordinate.alpha = 1
-      this.coordinateTop.toTarget(20, 0)
     }
 
     this.create()
     this.addChild(this.graphics, this.startCoordinate, this.endCoordinate)
     // 目前不需要 this.heightInfo, this.leftInfo, this.topInfo
-    this.addProperties(this.widthInfo, this.coordinateTop)
+    this.addProperties(this.widthInfo)
 
     // === Event ===
-    this.on('click', (e) => this.onClick(e))
+    this.on(EventType.CLICK, (e) => this.onClick(e))
   }
 
   onClick(event) {
-
+    console.log('ChartItem : onClick', event);
   }
 
   getCurrentBoxInfo() {
@@ -152,16 +147,15 @@ export default class ChartItem extends BaseContainer {
   }
 
   draw() {
-    const graphics = this.graphics
-    graphics.beginFill(0xffffff, 0)
-    graphics.drawRect(0, 0, this.widthInfo.status, this.heightInfo.status + 16)
-    graphics.beginFill(this.color)
-    graphics.drawRect(0, 8, this.widthInfo.status, this.heightInfo.status)
+    this.graphics
+      // 
+      .beginFill(0xffffff, 0)
+      .drawRect(0, 0, this.widthInfo.status, this.heightInfo.status + 16)
+      .beginFill(this.color)
+      .drawRect(0, 8, this.widthInfo.status, this.heightInfo.status)
   }
 
   update(t) {
-    this.startCoordinate.y = -20 + this.coordinateTop.status
     this.endCoordinate.x = this.widthInfo.status
-    this.endCoordinate.y = -20 + this.coordinateTop.status
   }
 }

@@ -46,7 +46,6 @@ export default class ChartGroup extends BaseContainer {
       return new ChartItem({
         isInit: this.isInit,
         app: this.getApplication(),
-        event: this.event,
         type: this.model.name,
         color: this.color,
         DateLine: this.DateLine,
@@ -59,9 +58,7 @@ export default class ChartGroup extends BaseContainer {
   /**
    * @param {number} t 
    */
-  update(t) {}
-
-  draw() {
+  update(t) {
     this.children.forEach(container => {
       if (container instanceof ChartItem) {
         const box = container.getCurrentBoxInfo()
@@ -69,13 +66,14 @@ export default class ChartGroup extends BaseContainer {
         container.y = box.top
       }
     })
+  }
 
+  draw() {
     // if (this.sort) {
     //   this.graphics.lineStyle(1, 0xEEEEEE)
     //   this.graphics.moveTo(0, 0)
     //   this.graphics.lineTo(this.canvasWidth, 0)
     // }
-
   }
 
 }

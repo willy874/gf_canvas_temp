@@ -4,16 +4,17 @@ import {
 } from '@base/pixi';
 import DynamicProperties from './dynamic-properties'
 
-export default class BaseContainer extends Container {
+export default class BasePrototype extends Container {
   constructor(args) {
-    super();
+    super()
     const {
       app,
       x,
       y,
+      root,
+      isInit,
       canvasWidth,
       canvasHeight,
-      event
     } = args
     /** @type {() => Application} */
     this.getApplication = () => app;
@@ -21,14 +22,29 @@ export default class BaseContainer extends Container {
     if (x) this.x = x
     /** @type {number} */
     if (y) this.y = y
+    /** @type {import('./root').default} */
+    this.root = root || null
+    /** @type {boolean} */
+    this.isInit = isInit || false
     /** @type {number} */
-    this.canvasWidth = canvasWidth;
+    this.canvasWidth = canvasWidth || 0;
     /** @type {number} */
-    this.canvasHeight = canvasHeight;
+    this.canvasHeight = canvasHeight || 0;
     /** @type {IDynamicProperties[]} */
     this.properties = []
-    /** @type {import('eventemitter2').EventEmitter2} */
-    this.event = event
+    /** @type {import('./base-container').default[]} */
+    this.children = []
+  }
+
+  getArguments() {
+    return {
+      app: this.getApplication(),
+      root: this.root,
+      isInit: this.isInit,
+      canvasWidth: this.canvasWidth,
+      canvasHeight: this.canvasHeight,
+      properties: this.properties,
+    }
   }
 
   /**
@@ -91,11 +107,11 @@ export default class BaseContainer extends Container {
    */
   tickerRender(t) {
     this.children.forEach(child => {
+      if (child.tickerRender) {
+        child.tickerRender(t)
+      }
       if (child instanceof Graphics) {
         child.clear()
-      }
-      if (child instanceof BaseContainer) {
-        child.tickerRender(t)
       }
     })
     this.properties.forEach((property) => {

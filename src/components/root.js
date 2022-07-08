@@ -2,30 +2,53 @@ import {
   EventType
 } from '@base/enums'
 import {
-  EventEmitter2 as EventEmitter
-} from 'eventemitter2';
+  Graphics
+} from '@base/pixi';
 import {
-  MoveEvent
-} from '@base/class'
+  GlobalEvent
+} from '@base/utils'
 import BaseContainer from "./base-container"
+
 
 export default class RootContainer extends BaseContainer {
   constructor(args) {
     super(args)
-    /** @type {EventEmitter} */
-    this.event = new EventEmitter()
 
     this.useTickerEvent((t) => {
       this.tickerRender(t)
     })
-    const canvas = this.getApplication().view
-    canvas.addEventListener(EventType.MOUSEDOWN, (e) => this.onMousedown(e))
-    canvas.addEventListener(EventType.MOUSEMOVE, (e) => this.onMousemove(e))
-    canvas.addEventListener(EventType.MOUSEOUT, (e) => this.onMouseout(e))
-    canvas.addEventListener(EventType.MOUSEUP, (e) => this.onMouseup(e))
-    canvas.addEventListener(EventType.WEBGLCONTEXTLOST, (e) => e.preventDefault());
-    canvas.addEventListener(EventType.WEBGLCONTEXTRESTORED, (e) => this.initWebGL(e));
+
+
+    // === Base Attribute ===
+    /** @type {boolean} */
+    this.isStopPropagation = false
+    /** @type {boolean} */
+    this.isScaleDrag = false
+    /** @type {boolean} */
+    this.isRulerDrag = false
+    /** @type {any} */
+    this.target = null
+    /** @type {boolean} */
+    this.interactive = true
+
+    this.on(EventType.POINTERMOVE, (e) => this.onPointmove(e))
+    this.on(EventType.MOUSEDOWN, (e) => this.onMousedown(e))
+    this.on(EventType.MOUSEOUT, (e) => this.onMouseout(e))
+    this.on(EventType.MOUSEUP, (e) => this.onMouseup(e))
+    this.on(EventType.MOUSEOVER, (e) => this.onMouseover(e))
+
+    this.graphics = new Graphics()
+    this.addChild(this.graphics)
   }
+
+  /**
+   * @param {number} t 
+   */
+  update(t) {
+    this.graphics.beginFill(0xffffff, 0.1).drawRect(0, 0, this.canvasWidth, this.canvasHeight)
+  }
+
+  draw() {}
 
   useTickerEvent(callback) {
     let time = 0
@@ -38,42 +61,89 @@ export default class RootContainer extends BaseContainer {
     })
   }
 
-  initWebGL(e) {
-    window.location.reload()
-  }
-
+  /**
+   * @param {InteractionEvent} event 
+   */
   onMousedown(event) {
-    this.translateX = event.clientX
-    this.translateY = event.clientY
-    this.isMouseDown = true
-    this.event.emit(EventType.MOUSEDOWN, event)
+    // console.log('onMouseout', event, event.data.global, event.target);
+    this.onDragStart(event)
+    this.isScaleDrag = true
   }
 
-  onMousemove(event) {
-    if (this.isMouseDown) {
-      const moveX = event.clientX - this.translateX
-      const moveY = event.clientY - this.translateY
-      this.translateX = event.clientX
-      this.translateY = event.clientY
-      this.onDragmove(new MoveEvent(event, {
-        moveX,
-        moveY
-      }))
-      this.event.emit(EventType.DRAGMOVE, event)
+  /**
+   * @param {InteractionEvent} event 
+   */
+  onPointmove(event) {
+    const originalEvent = event.data.originalEvent
+    if (originalEvent instanceof PointerEvent || originalEvent instanceof MouseEvent) {
+      if (this.isScaleDrag) {
+        this.onScalemove(originalEvent)
+      }
+      if (this.isRulerDrag) {
+        this.onRulermove(originalEvent)
+      }
+    }
+    if (originalEvent instanceof TouchEvent) {
+      // 觸控處理
     }
   }
 
-  onDragmove(event) {
-    this.event.emit(EventType.DRAGMOVE, event)
+  /**
+   * @param {PointerEvent | MouseEvent} event 
+   */
+  onScalemove(event) {
+    GlobalEvent.emit(EventType.SCALEMOVE, event)
   }
 
+  /**
+   * @param {PointerEvent | MouseEvent} event 
+   */
+  onRulermove(event) {
+    GlobalEvent.emit(EventType.RULERMOVE, event)
+  }
+
+  /**
+   * @param {InteractionEvent} event 
+   */
   onMouseout(event) {
-    this.isMouseDown = false
-    this.event.emit(EventType.MOUSEOUT, event)
+    this.onDragEnd(event)
   }
 
+  /**
+   * @param {InteractionEvent} event 
+   */
+  onMouseover(event) {}
+
+  /**
+   * @param {InteractionEvent} event 
+   */
   onMouseup(event) {
-    this.isMouseDown = false
-    this.event.emit(EventType.MOUSEUP, event)
+    // console.log('onMouseup');
+    this.onDragEnd(event)
+  }
+
+  /**
+   * @param {InteractionEvent} event 
+   */
+  onDragStart(event) {
+    // 切換 cursor
+    this.getApplication().view.style.cursor = 'all-scroll'
+    const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles
+    cursorStyles.default = 'all-scroll'
+    cursorStyles.pointer = 'all-scroll'
+  }
+
+  /**
+   * @param {InteractionEvent} event 
+   */
+  onDragEnd(event) {
+    this.isScaleDrag = false
+    this.isRulerDrag = false
+    this.target = null
+    // 切換 cursor
+    this.getApplication().view.style.cursor = 'default'
+    const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles
+    cursorStyles.default = 'default'
+    cursorStyles.pointer = 'pointer'
   }
 }

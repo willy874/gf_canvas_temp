@@ -5,7 +5,8 @@ import {
 import {
   dateFormat,
   getUnitValue,
-  getUnitFormat
+  getUnitFormat,
+  GlobalEvent
 } from '@base/utils'
 import {
   FontFamily,
@@ -113,17 +114,19 @@ export default class DateLine extends BaseContainer {
       })
     }
 
-    this.event.on(EventType.DRAGMOVE, (e) => this.onDragmove(e))
+    GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onPointmove(e))
     this.addChild(this.centerLineGraphics)
     this.addProperties(this.centerLine, this.scaleLine, this.subScaleLine)
     this.create()
   }
 
-  onDragmove(event) {
-    const left = this.translateX + event.moveX
+  /**
+   * @param {PointerEvent} event 
+   */
+  onPointmove(event) {
+    const left = this.translateX + event.movementX
     if (left >= 0) {
       this.translateX = left
-      this.event.emit(EventType.SCALEMOVE, event)
     }
     this.textUpdate()
   }
@@ -174,22 +177,24 @@ export default class DateLine extends BaseContainer {
 
   drawArrowLine() {
     const graphics = this.centerLineGraphics
-    // centerLine
-    graphics.lineStyle(this.lineSolidWidth)
-    graphics.moveTo(0, this.lineBaseY)
-    graphics.lineTo(this.centerLine.status, this.lineBaseY)
-    graphics.moveTo(this.lineWidth, this.lineBaseY)
-    graphics.lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
-    // scaleLine
+    graphics
+      // centerLine
+      .lineStyle(this.lineSolidWidth)
+      .moveTo(0, this.lineBaseY)
+      .lineTo(this.centerLine.status, this.lineBaseY)
+      .moveTo(this.lineWidth, this.lineBaseY)
+      .lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
     this.textList.forEach(text => {
       const left = text.x + text.width / 2
-      graphics.lineStyle(this.scaleWidth)
-      graphics.moveTo(left, this.lineBaseY)
-      graphics.lineTo(left, this.lineBaseY - this.scaleLine.status)
       const subLeft = left - this.textWidth / 2 - this.textPaddingX
-      graphics.lineStyle(this.subScaleWidth)
-      graphics.moveTo(subLeft, this.lineBaseY)
-      graphics.lineTo(subLeft, this.lineBaseY - this.subScaleLine.status)
+      graphics
+        // scaleLine
+        .lineStyle(this.scaleWidth)
+        .moveTo(left, this.lineBaseY)
+        .lineTo(left, this.lineBaseY - this.scaleLine.status)
+        .lineStyle(this.subScaleWidth)
+        .moveTo(subLeft, this.lineBaseY)
+        .lineTo(subLeft, this.lineBaseY - this.subScaleLine.status)
     })
   }
 
