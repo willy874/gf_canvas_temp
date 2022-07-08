@@ -9,8 +9,6 @@ import {
   GlobalEvent
 } from '@base/utils'
 import {
-  FontFamily,
-  FontSize,
   TimeUnit,
   EventType
 } from '@base/enums'
@@ -22,38 +20,17 @@ export default class DateLine extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      isInit,
-      canvasWidth,
-      canvasHeight,
-      fontSize,
-      lineSolidWidth,
-      textPaddingX,
-      textPaddingY,
-      unit,
-      translateX,
-      fontFamily,
+      props,
     } = args;
     // === Props Attribute ===
-    /** @type {number} */
-    this.canvasWidth = canvasWidth;
-    /** @type {number} */
-    this.canvasHeight = canvasHeight;
-    /** @type {number|string} */
-    this.unit = unit
-    /** @type {number} */
-    this.translateX = translateX
-    /** @type {number} */
-    this.fontSize = fontSize || FontSize.SMALL;
-    /** @type {string} */
-    this.fontFamily = fontFamily || FontFamily.SANS_SERIF
-    /** @type {number} */
-    this.lineSolidWidth = lineSolidWidth
-    /** @type {number} */
-    this.textPaddingX = textPaddingX
-    /** @type {number} */
-    this.textPaddingY = textPaddingY
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
 
     // === Base Attribute ===
+    /** @type {number} */
+    this.paddingTop = 0
+    /** @type {number} */
+    this.paddingBottom = 12
     /** @type {number} */
     this.scaleHeight = 6
     /** @type {number} */
@@ -67,13 +44,15 @@ export default class DateLine extends BaseContainer {
     /** @type {number} */
     this.scaleSpaceWidth = 0
     /** @type {number} */
-    this.lineWidth = this.canvasWidth - this.x * 2
+    this.lineWidth = this.props.canvasWidth - this.x * 2
     /** @type {number} */
-    this.minTextWidth = this.getTextWidth('mm:ss', this.fontSize)
+    this.minTextWidth = this.getTextWidth('mm:ss', this.props.fontSize)
     /** @type {number} */
-    this.maxTextWidth = this.getTextWidth('YYYY/MM/DD', this.fontSize)
+    this.maxTextWidth = this.getTextWidth('YYYY/MM/DD', this.props.fontSize)
     /** @type {number} */
     this.textWidth = 0
+    /** @type {number} */
+    this.textHeight = 0
     /** @type {number} 取得每 px 代表的時間長度 */
     this.basePixelTime = this.getPixelTime()
     /** @type {number} */
@@ -82,8 +61,6 @@ export default class DateLine extends BaseContainer {
     this.lineBaseY = 0
     /** @type {number} */
     this.baseX = 0
-    /** @type {number} */
-    this.baseTime = Date.now()
     /** @type {Text} */
     this.endTimeText = null
     /** @type {number[]} */
@@ -94,8 +71,14 @@ export default class DateLine extends BaseContainer {
     this.textLeftList = []
     /** @type {Text[]} */
     this.textList = []
+    /** @type {Text[]} */
+    this.futureTimeList = []
     /** @type {Graphics} */
     this.centerLineGraphics = new Graphics()
+    /** @type {Graphics} */
+    this.scaleLineGraphics = new Graphics()
+    /** @type {Graphics} */
+    this.paddingSpaceGraphics = new Graphics()
     /** @type {IDynamicProperties} */
     this.centerLine = new DynamicProperties({
       origin: this.x
@@ -106,7 +89,7 @@ export default class DateLine extends BaseContainer {
     this.subScaleLine = new DynamicProperties()
 
     // Center Line
-    if (isInit) {
+    if (this.props.isInit) {
       this.centerLine.toTarget(this.x + this.lineWidth / 2, 1000).then(() => {
         this.scaleLine.toTarget(this.scaleHeight, 300).then(() => {
           this.subScaleLine.toTarget(this.subScaleHeight, 300)
@@ -115,7 +98,7 @@ export default class DateLine extends BaseContainer {
     }
 
     GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onPointmove(e))
-    this.addChild(this.centerLineGraphics)
+    this.graphicsList = [this.paddingSpaceGraphics, this.centerLineGraphics, this.scaleLineGraphics]
     this.addProperties(this.centerLine, this.scaleLine, this.subScaleLine)
     this.create()
   }
@@ -124,9 +107,9 @@ export default class DateLine extends BaseContainer {
    * @param {PointerEvent} event 
    */
   onPointmove(event) {
-    const left = this.translateX + event.movementX
-    if (left >= 0) {
-      this.translateX = left
+    const left = this.props.translateX + event.movementX
+    if (left >= 0 - this.maxTextWidth) {
+      this.props.translateX = left
     }
     this.textUpdate()
   }
@@ -136,13 +119,13 @@ export default class DateLine extends BaseContainer {
       this.endTimeText = this.textList[0]
       this.textWidthList = this.textList.map(text => text.width)
       this.textWidth = Math.max(...this.textWidthList)
-      this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.textPaddingX * 2, 0)
-      this.lineBaseY = Math.max(...this.textList.map(t => t.height)) + this.scaleHeight + this.textPaddingY * 2
+      this.textTotalWidth = this.textList.reduce((acc, text) => acc + text.width + this.props.textPaddingX * 2, 0)
+      this.textHeight = Math.max(...this.textList.map(t => t.height)) + this.props.textPaddingY * 2
     }
   }
 
   textUpdate() {
-    if (this.textTotalWidth - this.lineWidth - this.translateX < 0) {
+    if (this.textTotalWidth - this.lineWidth - this.props.translateX < 0) {
       this.dateList.push(this.getDateValue(this.dateList.length))
       const index = this.dateList.length - 2
       const text = this.getText(dateFormat(this.dateList[index], 'YYYY/MM/DD HH:mm:ss'), index)
@@ -172,29 +155,29 @@ export default class DateLine extends BaseContainer {
 
   refreshText(...texts) {
     this.removeChildren()
-    this.addChild(this.centerLineGraphics, ...texts)
+    this.addChild(...this.graphicsList, ...texts)
   }
 
   drawArrowLine() {
-    const graphics = this.centerLineGraphics
-    graphics
+    const lineBaseY = this.paddingTop + this.textHeight + this.scaleHeight
+    this.centerLineGraphics
       // centerLine
-      .lineStyle(this.lineSolidWidth)
-      .moveTo(0, this.lineBaseY)
-      .lineTo(this.centerLine.status, this.lineBaseY)
-      .moveTo(this.lineWidth, this.lineBaseY)
-      .lineTo(this.lineWidth - this.centerLine.status, this.lineBaseY)
+      .lineStyle(this.props.lineSolidWidth)
+      .moveTo(0, lineBaseY)
+      .lineTo(this.centerLine.status, lineBaseY)
+      .moveTo(this.lineWidth, lineBaseY)
+      .lineTo(this.lineWidth - this.centerLine.status, lineBaseY)
     this.textList.forEach(text => {
       const left = text.x + text.width / 2
-      const subLeft = left - this.textWidth / 2 - this.textPaddingX
-      graphics
+      const subLeft = left - this.textWidth / 2 - this.props.textPaddingX
+      this.scaleLineGraphics
         // scaleLine
         .lineStyle(this.scaleWidth)
-        .moveTo(left, this.lineBaseY)
-        .lineTo(left, this.lineBaseY - this.scaleLine.status)
+        .moveTo(left, lineBaseY)
+        .lineTo(left, lineBaseY - this.scaleLine.status)
         .lineStyle(this.subScaleWidth)
-        .moveTo(subLeft, this.lineBaseY)
-        .lineTo(subLeft, this.lineBaseY - this.subScaleLine.status)
+        .moveTo(subLeft, lineBaseY)
+        .lineTo(subLeft, lineBaseY - this.subScaleLine.status)
     })
   }
 
@@ -217,7 +200,7 @@ export default class DateLine extends BaseContainer {
    * @returns {number}
    */
   getPixelTime() {
-    return getUnitValue(this.unit) / this.scaleSpaceWidth
+    return getUnitValue(this.props.unit) / this.scaleSpaceWidth
   }
 
   /**
@@ -230,7 +213,7 @@ export default class DateLine extends BaseContainer {
     this.textLeftList.forEach((left, index) => {
       const text = this.textList[index]
       text.x = left
-      text.y = this.textPaddingY
+      text.y = this.paddingTop + this.props.textPaddingY
     })
   }
 
@@ -244,9 +227,9 @@ export default class DateLine extends BaseContainer {
    * ```
    */
   getTextLeft(text, index) {
-    const blockWidth = this.textWidth + this.textPaddingX * 2
+    const blockWidth = this.textWidth + this.props.textPaddingX * 2
     const diffCenter = (blockWidth - text.width) / 2
-    return this.lineWidth - blockWidth - (blockWidth * index) + diffCenter + this.translateX
+    return this.lineWidth - blockWidth - (blockWidth * index) + diffCenter + this.props.translateX
   }
 
   /**
@@ -260,10 +243,10 @@ export default class DateLine extends BaseContainer {
    */
   getTextWidth(font, fontSize) {
     const text = new Text(font, {
-      fontFamily: this.fontFamily,
+      fontFamily: this.props.fontFamily,
       fontSize,
     })
-    return text.width + this.textPaddingX * 2
+    return text.width + this.props.textPaddingX * 2
   }
 
   /**
@@ -287,7 +270,7 @@ export default class DateLine extends BaseContainer {
    * ```
    */
   getDateValue(index) {
-    return this.baseTime - (getUnitValue(this.unit) * index)
+    return this.props.baseTime - (getUnitValue(this.props.unit) * index)
   }
 
   /**
@@ -300,8 +283,8 @@ export default class DateLine extends BaseContainer {
    * ```
    */
   getText(text, index) {
-    const unit = getUnitValue(this.unit)
-    const format = getUnitFormat(this.unit)
+    const unit = getUnitValue(this.props.unit)
+    const format = getUnitFormat(this.props.unit)
     const current = this.dateList[index]
     const prev = this.dateList[index - 1]
     const next = this.dateList[index + 1]
@@ -310,39 +293,39 @@ export default class DateLine extends BaseContainer {
     if (isLast || isFirst) {
       return new Text(dateFormat(text, format), {
         fontWeight: '400',
-        fontFamily: this.fontFamily,
-        fontSize: this.fontSize,
+        fontFamily: this.props.fontFamily,
+        fontSize: this.props.fontSize,
         align: 'center'
       })
     }
     if (unit <= getUnitValue(TimeUnit.SECOND) && new Date(current).getHours() !== new Date(next).getHours()) {
       return new Text(dateFormat(text, 'HH:mm:ss'), {
         fontWeight: '700',
-        fontFamily: this.fontFamily,
-        fontSize: this.fontSize,
+        fontFamily: this.props.fontFamily,
+        fontSize: this.props.fontSize,
         align: 'center'
       })
     }
     if (unit <= getUnitValue(TimeUnit.DAY) && new Date(current).getDay() !== new Date(next).getDay()) {
       return new Text(dateFormat(text, 'MM/DD'), {
         fontWeight: '700',
-        fontFamily: this.fontFamily,
-        fontSize: this.fontSize,
+        fontFamily: this.props.fontFamily,
+        fontSize: this.props.fontSize,
         align: 'center'
       })
     }
     if (new Date(current).getFullYear() !== new Date(next).getFullYear()) {
       return new Text(dateFormat(text, 'YYYY/MM'), {
         fontWeight: '700',
-        fontFamily: this.fontFamily,
-        fontSize: this.fontSize,
+        fontFamily: this.props.fontFamily,
+        fontSize: this.props.fontSize,
         align: 'center'
       })
     }
     return new Text(dateFormat(text, format), {
       fontWeight: '400',
-      fontFamily: this.fontFamily,
-      fontSize: this.fontSize,
+      fontFamily: this.props.fontFamily,
+      fontSize: this.props.fontSize,
       align: 'center'
     })
   }

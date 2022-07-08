@@ -10,15 +10,16 @@ export class Coordinate extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      isInit,
+      props,
       color,
       model,
       currentTime,
     } = args
 
     // === Props Attribute ===
-    /** @type {boolean} */
-    this.isInit = isInit
+
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
     /** @type {number} */
     this.color = color
     /** @type {ITimeLimeChartModel} */
@@ -69,15 +70,17 @@ export class Coordinate extends BaseContainer {
   }
 
   draw() {
-    this.graphics
-      // 
-      .beginFill(0x6C6C6C)
-      .lineStyle(1, 0x6C6C6C)
-      .drawPolygon([0, 7, -4, -1, 4, -1])
-      .drawCircle(0, -5, 6)
-      .beginFill(this.color)
-      .lineStyle(1, this.color)
-      .drawCircle(0, -5, 3)
+    if (this.props.isShowCoordinates) {
+      this.graphics
+        // 
+        .beginFill(0x6C6C6C)
+        .lineStyle(1, 0x6C6C6C)
+        .drawPolygon([0, 7, -4, -1, 4, -1])
+        .drawCircle(0, -5, 6)
+        .beginFill(this.color)
+        .lineStyle(1, this.color)
+        .drawCircle(0, -5, 3)
+    }
   }
 
 }

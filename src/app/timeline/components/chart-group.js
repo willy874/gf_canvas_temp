@@ -11,12 +11,20 @@ export default class ChartGroup extends BaseContainer {
   constructor(args) {
     super(args)
     const {
+      props,
       isInit,
       model,
       sort,
       color,
-      DateLine,
     } = args;
+    // === Props Attribute ===
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
+    const {
+      DateLine,
+      RulerLine,
+    } = this.props.getComponents()
+
     /** @type {boolean} */
     this.isInit = isInit
     /** @type {IEventTypeModel} */
@@ -27,6 +35,8 @@ export default class ChartGroup extends BaseContainer {
     this.color = color;
     /** @type {import('./dateline').default} */
     this.DateLine = DateLine;
+    /** @type {import('./ruler-group').default} */
+    this.RulerLine = RulerLine;
 
     this.graphics = new Graphics()
     this.create()
@@ -44,8 +54,7 @@ export default class ChartGroup extends BaseContainer {
     return this.model.data.map((model, index) => {
       const matrixInfo = matrixInfoList[index]
       return new ChartItem({
-        isInit: this.isInit,
-        app: this.getApplication(),
+        ...this.getArguments(),
         type: this.model.name,
         color: this.color,
         DateLine: this.DateLine,
@@ -55,15 +64,33 @@ export default class ChartGroup extends BaseContainer {
     })
   }
 
+
+  /**
+   * @param {ChartItem} item
+   */
+  updateChartGroup(item) {
+    // console.log(this.y);
+    if (item) {
+      const box = item.getCurrentBoxInfo()
+      item.x = box.left + this.props.translateX
+      item.y = box.top
+      const itemY = this.y + box.top
+      const chartGroupHeight = this.DateLine.y + this.DateLine.textHeight + this.DateLine.scaleHeight + this.props.lineSolidWidth + this.DateLine.paddingBottom
+      if (itemY >= 0 && itemY <= this.props.canvasHeight - chartGroupHeight - this.RulerLine.plusButtonSize * 3) {
+        item.alpha = 1
+      } else {
+        item.alpha = 0
+      }
+    }
+  }
+
   /**
    * @param {number} t 
    */
   update(t) {
     this.children.forEach(container => {
       if (container instanceof ChartItem) {
-        const box = container.getCurrentBoxInfo()
-        container.x = box.left + this.DateLine.translateX
-        container.y = box.top
+        this.updateChartGroup(container)
       }
     })
   }

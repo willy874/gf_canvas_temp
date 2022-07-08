@@ -15,17 +15,24 @@ export default class RulerItem extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      DateLine,
+      props,
       translateX,
       // appendRulerLine,
       removeRulerLine,
       toTopRulerLine
     } = args
-
     // === Props Attribute ===
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
+    const {
+      DateLine,
+    } = this.props.getComponents()
     /** @type {import('./dateline').default} */
-    this.DateLine = DateLine
-    /** @type {number} */
+    this.DateLine = DateLine;
+    /**
+     * @description 每個尺規個別使用自己的定位 
+     * @type {number}
+     */
     this.translateX = translateX || 0
 
     // /** @type {(param: typeof args) => void} */
@@ -94,9 +101,9 @@ export default class RulerItem extends BaseContainer {
      * @type {Graphics} 
      */
     this.dragButton = new Graphics()
-    this.dragButton.interactive = true
-    this.dragButton.on(EventType.MOUSEDOWN, (e) => this.onDragMouseDown(e))
-    this.dragButton.on(EventType.MOUSEUP, (e) => this.onDragMouseUp(e))
+    // this.dragButton.interactive = true
+    // this.dragButton.on(EventType.MOUSEDOWN, (e) => this.onDragMouseDown(e))
+    // this.dragButton.on(EventType.MOUSEUP, (e) => this.onDragMouseUp(e))
     /** 
      * Dash Button
      * @type {Graphics} 
@@ -107,12 +114,12 @@ export default class RulerItem extends BaseContainer {
     this.dashButton.on(EventType.MOUSEUP, (e) => this.onDashMouseUp(e))
     /** 
      * Tip Text
-     * @type {Text} 
+     * @type {Text}
      */
     this.tipText = new Text('', {
       fontWeight: '400',
-      fontFamily: this.DateLine.fontFamily,
-      fontSize: this.DateLine.fontSize,
+      fontFamily: this.props.fontFamily,
+      fontSize: this.props.fontSize,
       align: 'center'
     })
 
@@ -122,7 +129,7 @@ export default class RulerItem extends BaseContainer {
 
   updateTipTime() {
     this.dashedLineLeft = this.translateX
-    this.currentTime = this.DateLine.baseTime - this.DateLine.basePixelTime * (this.DateLine.baseX - this.dashedLineLeft)
+    this.currentTime = this.props.baseTime - this.DateLine.basePixelTime * (this.DateLine.baseX - this.dashedLineLeft)
     this.tipText.text = dateFormat(this.currentTime, 'YYYY/MM/DD HH:mm:ss')
   }
 
@@ -146,15 +153,18 @@ export default class RulerItem extends BaseContainer {
    * @param {PointerEvent | DragEvent | TouchEvent} event 
    */
   onPointmove(event) {
-    // this.isPlusClick = false
-    this.isDashClick = false
+    if (this.root.dragTriggedCount >= 5) {
+      // this.isPlusClick = false
+      this.isDashClick = false
+      this.root.onDragStart(event)
+    }
     if (event instanceof PointerEvent || event instanceof DragEvent) {
       if (this.root.target === this) {
         const move = this.translateX + event.movementX
         if (move <= 0 + this.tipRectWidth / 2) {
           this.translateX = 0 + this.tipRectWidth / 2
-        } else if (move >= this.canvasWidth - this.tipRectWidth / 2) {
-          this.translateX = this.canvasWidth - this.tipRectWidth / 2
+        } else if (move >= this.props.canvasWidth - this.tipRectWidth / 2) {
+          this.translateX = this.props.canvasWidth - this.tipRectWidth / 2
         } else {
           this.translateX = move
         }
@@ -169,18 +179,17 @@ export default class RulerItem extends BaseContainer {
     this.isDashClick = true
     this.root.isRulerDrag = true
     this.root.target = this
-    this.root.onDragStart(event)
   }
 
   onMouseup(event) {
     this.root.onDragEnd(event)
   }
 
-  onDragMouseDown(event) {}
+  // onDragMouseDown(event) {}
 
-  onDragMouseUp(event) {
-    this.root.onDragEnd(event)
-  }
+  // onDragMouseUp(event) {
+  //   this.root.onDragEnd(event)
+  // }
 
   // onPlusMouseDown(event) {
   //   this.isPlusClick = true
@@ -219,7 +228,7 @@ export default class RulerItem extends BaseContainer {
     }
     this.tipText.alpha = Number(isShow)
     // Dashed Line
-    const lineLength = this.canvasHeight - height - this.paddingBottom - this.buttonSize * 3
+    const lineLength = this.props.canvasHeight - height - this.paddingBottom - this.buttonSize * 1
     const dashedLineBase = this.dashedLineIllusory + this.dashedLineSolid
     const dashedLineCount = Math.floor(lineLength / dashedLineBase)
     new Array(dashedLineCount).fill(null).forEach((_, index) => {
@@ -234,17 +243,17 @@ export default class RulerItem extends BaseContainer {
     const circleY = this.paddingTop + height + lineLength
     const circleSize = this.buttonSize - this.dashedLineWidth * 2
     const plusIconSize = circleSize * 0.8
-    const dotSize = this.buttonSize * 0.25
-    this.dragButton
-      // 
-      .beginFill(0xffffff, 0.1)
-      .lineStyle(this.dashedLineWidth, 0x424242)
-      .drawCircle(circleX, circleY, circleSize)
-      .beginFill(0x424242)
-      .drawCircle(circleX + dotSize, circleY + dotSize, dotSize / 2)
-      .drawCircle(circleX + dotSize, circleY - dotSize, dotSize / 2)
-      .drawCircle(circleX - dotSize, circleY + dotSize, dotSize / 2)
-      .drawCircle(circleX - dotSize, circleY - dotSize, dotSize / 2)
+    // const dotSize = this.buttonSize * 0.25
+    // this.dragButton
+    //   // 
+    //   .beginFill(0xffffff, 0.1)
+    //   .lineStyle(this.dashedLineWidth, 0x424242)
+    //   .drawCircle(circleX, circleY, circleSize)
+    //   .beginFill(0x424242)
+    //   .drawCircle(circleX + dotSize, circleY + dotSize, dotSize / 2)
+    //   .drawCircle(circleX + dotSize, circleY - dotSize, dotSize / 2)
+    //   .drawCircle(circleX - dotSize, circleY + dotSize, dotSize / 2)
+    //   .drawCircle(circleX - dotSize, circleY - dotSize, dotSize / 2)
     // this.plusButton
     //   .beginFill(0xffffff, 0.1)
     //   .lineStyle(this.dashedLineWidth, 0x424242)
@@ -254,7 +263,8 @@ export default class RulerItem extends BaseContainer {
     //   .moveTo(circleX, circleY - plusIconSize / 2)
     //   .lineTo(circleX, circleY + plusIconSize / 2)
     // Circle Dash Button
-    const circleY2 = circleY + this.buttonSize * 1.5 + this.dashedLineWidth * 2
+    const circleY2 = circleY
+    // const circleY2 = circleY + this.buttonSize * 1.5 + this.dashedLineWidth * 2
     this.dashButton
       // 
       .beginFill(0xffffff, 0.1)

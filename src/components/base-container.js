@@ -4,32 +4,42 @@ import {
 } from '@base/pixi';
 import DynamicProperties from './dynamic-properties'
 
+/**
+ * @typedef {Object} BaseContainerConstructorArguments
+ * @property {any} props
+ * @property {number} x
+ * @property {number} y
+ * @property {Application} app
+ * @property {any} root
+ */
+/**
+ * @callback BaseContainerConstructor
+ * @param {Partial<BaseContainerConstructorArguments>} args 
+ */
+
 export default class BasePrototype extends Container {
+  /**
+   * @type {BaseContainerConstructor}
+   */
   constructor(args) {
     super()
     const {
-      app,
       x,
       y,
+      props,
+      app,
       root,
-      isInit,
-      canvasWidth,
-      canvasHeight,
     } = args
-    /** @type {() => Application} */
-    this.getApplication = () => app;
+    /** @type {any} */
+    this.props = props
     /** @type {number} */
     if (x) this.x = x
     /** @type {number} */
     if (y) this.y = y
+    /** @type {() => Application} */
+    this.getApplication = () => app;
     /** @type {import('./root').default} */
     this.root = root || null
-    /** @type {boolean} */
-    this.isInit = isInit || false
-    /** @type {number} */
-    this.canvasWidth = canvasWidth || 0;
-    /** @type {number} */
-    this.canvasHeight = canvasHeight || 0;
     /** @type {IDynamicProperties[]} */
     this.properties = []
     /** @type {import('./base-container').default[]} */
@@ -40,10 +50,9 @@ export default class BasePrototype extends Container {
     return {
       app: this.getApplication(),
       root: this.root,
-      isInit: this.isInit,
-      canvasWidth: this.canvasWidth,
-      canvasHeight: this.canvasHeight,
-      properties: this.properties,
+      canvasWidth: this.props.canvasWidth,
+      canvasHeight: this.props.canvasHeight,
+      props: this.props,
     }
   }
 

@@ -11,12 +11,16 @@ export default class RulerGroup extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      DateLine
+      props,
     } = args
-
     // === Props Attribute ===
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
+    const {
+      DateLine,
+    } = this.props.getComponents()
     /** @type {import('./dateline').default} */
-    this.DateLine = DateLine
+    this.DateLine = DateLine;
 
     // === Base Attribute ===
     /** 
@@ -38,7 +42,7 @@ export default class RulerGroup extends BaseContainer {
     const plusIconSolid = 2
     const plusIconSize = this.plusButtonSize - plusIconSolid * 2
     const circleX = this.plusButtonSize
-    const circleY = this.canvasHeight - this.plusButtonSize
+    const circleY = this.props.canvasHeight - this.plusButtonSize
     this.plusButton
       // 
       .beginFill(0xffffff, 0.1)
@@ -63,7 +67,6 @@ export default class RulerGroup extends BaseContainer {
   createRulerItem(args = {}) {
     return new RulerItem({
       ...this.getArguments(),
-      DateLine: this.DateLine,
       appendRulerLine: this.appendRulerLine.bind(this),
       removeRulerLine: this.removeRulerLine.bind(this),
       toTopRulerLine: this.toTopRulerLine.bind(this),

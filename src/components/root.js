@@ -11,21 +11,29 @@ import BaseContainer from "./base-container"
 
 
 export default class RootContainer extends BaseContainer {
+  /**
+   * @type {import('./base-container').BaseContainerConstructor}
+   */
   constructor(args) {
     super(args)
 
     this.useTickerEvent((t) => {
       this.tickerRender(t)
     })
-
-
+    const {
+      props
+    } = args
     // === Base Attribute ===
+    /** @type {any} */
+    this.props = props
     /** @type {boolean} */
     this.isStopPropagation = false
     /** @type {boolean} */
     this.isScaleDrag = false
     /** @type {boolean} */
     this.isRulerDrag = false
+    /** @type {number} */
+    this.dragTriggedCount = 0
     /** @type {any} */
     this.target = null
     /** @type {boolean} */
@@ -41,14 +49,9 @@ export default class RootContainer extends BaseContainer {
     this.addChild(this.graphics)
   }
 
-  /**
-   * @param {number} t 
-   */
-  update(t) {
-    this.graphics.beginFill(0xffffff, 0.1).drawRect(0, 0, this.canvasWidth, this.canvasHeight)
+  draw() {
+    this.graphics.beginFill(0xffffff, 0.1).drawRect(0, 0, this.props.canvasWidth, this.props.canvasHeight)
   }
-
-  draw() {}
 
   useTickerEvent(callback) {
     let time = 0
@@ -74,6 +77,7 @@ export default class RootContainer extends BaseContainer {
    * @param {InteractionEvent} event 
    */
   onPointmove(event) {
+    this.dragTriggedCount++
     const originalEvent = event.data.originalEvent
     if (originalEvent instanceof PointerEvent || originalEvent instanceof MouseEvent) {
       if (this.isScaleDrag) {
@@ -123,7 +127,7 @@ export default class RootContainer extends BaseContainer {
   }
 
   /**
-   * @param {InteractionEvent} event 
+   * @param {InteractionEvent| Event} event 
    */
   onDragStart(event) {
     // 切換 cursor
@@ -134,12 +138,13 @@ export default class RootContainer extends BaseContainer {
   }
 
   /**
-   * @param {InteractionEvent} event 
+   * @param {InteractionEvent| Event} event 
    */
   onDragEnd(event) {
     this.isScaleDrag = false
     this.isRulerDrag = false
     this.target = null
+    this.dragTriggedCount = 0
     // 切換 cursor
     this.getApplication().view.style.cursor = 'default'
     const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles

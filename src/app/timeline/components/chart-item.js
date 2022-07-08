@@ -17,12 +17,19 @@ export default class ChartItem extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      isInit,
+      props,
       color,
-      DateLine,
       model,
       matrixInfo
     } = args;
+
+    // === Props Attribute ===
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
+    const {
+      DateLine,
+    } = props.getComponents()
+
     const {
       startTime,
       endTime,
@@ -36,8 +43,6 @@ export default class ChartItem extends BaseContainer {
     } = matrixInfo
 
     // === Props Attribute ===
-    /** @type {boolean} */
-    this.isInit = isInit
     /** @type {number} */
     this.color = color
     /** @type {number} */
@@ -58,11 +63,6 @@ export default class ChartItem extends BaseContainer {
     this.DateLine = DateLine;
 
     // === Base Attribute ===
-    /** @type {boolean} */
-    this.interactive = true
-    /** @type {boolean} */
-    this.buttonMode = true
-
     /** @type {Graphics} */
     this.graphics = new Graphics()
     /** @type {IDynamicProperties} */
@@ -81,22 +81,29 @@ export default class ChartItem extends BaseContainer {
     })
 
     this.startCoordinate = new Coordinate({
-      app: this.getApplication(),
-      isInit,
+      ...this.getArguments(),
       color,
       model,
       currentTime: startTime
     })
     this.endCoordinate = new Coordinate({
-      app: this.getApplication(),
-      isInit,
-      event,
+      ...this.getArguments(),
       color,
       model,
-      currentTime: startTime
+      currentTime: endTime
     })
 
-    if (this.isInit) {
+    this.create()
+    this.addChild(this.graphics, this.startCoordinate, this.endCoordinate)
+    // 目前不需要 this.heightInfo, this.leftInfo, this.topInfo
+    this.addProperties(this.widthInfo)
+
+    // === Event ===
+    this.on(EventType.CLICK, (e) => this.onClick(e))
+  }
+
+  init() {
+    if (this.props.isInit) {
       this.widthInfo.toTarget(this.getChartWidth(), 1000).then(() => {
         this.endCoordinate.alpha = 1
         this.startCoordinate.alpha = 1
@@ -107,13 +114,6 @@ export default class ChartItem extends BaseContainer {
       this.startCoordinate.alpha = 1
     }
 
-    this.create()
-    this.addChild(this.graphics, this.startCoordinate, this.endCoordinate)
-    // 目前不需要 this.heightInfo, this.leftInfo, this.topInfo
-    this.addProperties(this.widthInfo)
-
-    // === Event ===
-    this.on(EventType.CLICK, (e) => this.onClick(e))
   }
 
   onClick(event) {
@@ -136,7 +136,7 @@ export default class ChartItem extends BaseContainer {
   }
 
   getChartLeft() {
-    const rangeTime = this.DateLine.baseTime - this.startTime
+    const rangeTime = this.props.baseTime - this.startTime
     const diff = Math.floor(rangeTime / this.DateLine.basePixelTime)
     const left = this.DateLine.baseX - diff
     return left

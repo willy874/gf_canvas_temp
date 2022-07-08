@@ -15,26 +15,19 @@ export default class EventChart extends BaseContainer {
   constructor(args) {
     super(args)
     const {
-      isInit,
-      types,
-      unit,
-      DateLine,
-      colors,
+      props,
     } = args;
-
     // === Props Attribute ===
-    /** @type {number} */
-    this.y = DateLine.y + DateLine.lineBaseY + 16
-    /** @type {boolean} */
-    this.isInit = isInit
-    /** @type {TimeUnit|number} */
-    this.unit = unit
-    /** @type {IEventTypeModel[]} */
-    this.types = types;
+    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    this.props = props
+    const {
+      DateLine,
+      RulerLine,
+    } = this.props.getComponents()
     /** @type {import('./dateline').default} */
     this.DateLine = DateLine;
-    /** @type {number[]} */
-    this.colors = colors;
+    /** @type {import('./ruler-group').default} */
+    this.RulerLine = RulerLine;
 
     // === Base Attribute ===
     /** @type {number} */
@@ -57,21 +50,18 @@ export default class EventChart extends BaseContainer {
   }
 
   getColor(index) {
-    return this.colors[index % this.colors.length]
+    return this.props.colors[index % this.props.colors.length]
   }
 
   getCharGroup() {
-    return this.types.filter(m => m.data.length).map((model, index) => {
+    return this.props.types.filter(m => m.data.length).map((model, index) => {
       return new ChartGroup({
-        isInit: this.isInit,
-        app: this.getApplication(),
-        unit: this.unit,
-        canvasWidth: this.canvasWidth,
-        canvasHeight: this.canvasHeight,
+        ...this.getArguments(),
         model,
         sort: index,
         color: this.getColor(index),
         DateLine: this.DateLine,
+        RulerLine: this.RulerLine,
       })
     })
   }
@@ -82,6 +72,8 @@ export default class EventChart extends BaseContainer {
   }
 
   update(t) {
+    // 計算自己的碰撞座標
+    this.y = this.DateLine.y + this.DateLine.textHeight + this.DateLine.scaleHeight + this.props.lineSolidWidth + this.DateLine.paddingBottom
     // 計算群組高度給予碰撞
     let y = this.translateY
     this.children.forEach(container => {
