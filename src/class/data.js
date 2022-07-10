@@ -38,6 +38,19 @@ export class EventModel {
  * @typedef {MatrixInfo & IEventModel} EventModelInfo
  */
 
+/**
+ * @typedef {Object} ChartModel
+ * @property {number|string} id 
+ * @property {number} startTime 
+ * @property {number} endTime 
+ */
+
+/**
+ * @typedef {Object} MatrixInfo
+ * @property {string} time 
+ * @property {number} row 
+ * @property {number} column 
+ */
 export class TimeMatrix {
   /**
    * @param {string} prev 
@@ -84,20 +97,21 @@ export class TimeMatrix {
   /**
    * @param {string[]} matrix 
    * @param {string} value 
-   * @returns {number}
+   * @returns {number}  當成功插入回傳 index，當找不到插入節點回傳 -1
    */
   static addMatrix(matrix, value) {
     let insertIndex = -1
     for (let index = 0; index < matrix.length; index++) {
-      if (matrix[index] === value) {
-        return insertIndex
-      }
+      // console.log(value, TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value) && 'isPrepend');
       if (TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value)) {
         insertIndex = index
+        // console.log('isPrepend', insertIndex);
         break
       }
+      // console.log(value, TimeMatrix.isAppend(matrix[index], matrix[index + 1], value) && 'isAppend');
       if (TimeMatrix.isAppend(matrix[index], matrix[index + 1], value)) {
         insertIndex = index + 1
+        // console.log('isAppend', insertIndex);
         break
       }
     }
@@ -109,33 +123,43 @@ export class TimeMatrix {
   }
 
   /**
-   * @param {ITimeLimeChartModel[]} list
-   * @returns {MatrixInfo[]}
+   * @param {string[]} list
+   * @param {string[][]} matrix
+   * @returns {number[]}
    */
-  static getInfo(list) {
-    const matrix = []
-    return list.map(model => {
-      const value = model.startTime + '-' + model.endTime
-      let column = -1
+  static getMatrixRowList(list, matrix) {
+    return list.map(value => {
       let row = 0
+      let matrixRow
       while (true) {
-        const matrixRow = matrix[row]
+        matrixRow = matrix[row]
         if (matrixRow) {
-          column = TimeMatrix.addMatrix(matrixRow, value)
-          if (column >= 0) {
+          if (TimeMatrix.addMatrix(matrixRow, value) >= 0) {
             break
           }
         } else {
-          column = 0
           matrix[row] = [value]
           break
         }
         row++
       }
+      return row
+    })
+  }
+
+  /**
+   * @param {ChartModel[]} list
+   * @param {string[][]} matrix
+   */
+  static getMappingModel(list, matrix) {
+    const timeList = list.map(model => `${model.startTime}-${model.id}-${model.endTime}`)
+    const rowList = TimeMatrix.getMatrixRowList(timeList, matrix)
+    return rowList.map((row, index) => {
+      const time = timeList[index]
       return {
+        time,
         row,
-        column,
-        matrix
+        column: matrix[row].indexOf(time),
       }
     })
   }

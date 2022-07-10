@@ -17,9 +17,11 @@ export default class EventChart extends BaseContainer {
     const {
       props,
     } = args;
-    // === Props Attribute ===
+
     /** @type {import('./timeline-app').TimelineApplicationOptions} */
     this.props = props
+
+    // === Components ===
     const {
       DateLine,
       RulerLine,
@@ -49,17 +51,11 @@ export default class EventChart extends BaseContainer {
     }
   }
 
-  getColor(index) {
-    return this.props.colors[index % this.props.colors.length]
-  }
-
   getCharGroup() {
-    return this.props.types.filter(m => m.data.length).map((model, index) => {
+    return this.props.types.filter(m => m.data.length).map((_, index) => {
       return new ChartGroup({
         ...this.getArguments(),
-        model,
         sort: index,
-        color: this.getColor(index),
         DateLine: this.DateLine,
         RulerLine: this.RulerLine,
       })
@@ -79,7 +75,7 @@ export default class EventChart extends BaseContainer {
     this.children.forEach(container => {
       if (container instanceof ChartGroup) {
         container.y = y
-        y += container.height
+        y += container.getCharGroupHeight()
       }
     })
   }

@@ -22,15 +22,17 @@ export default class DateLine extends BaseContainer {
     const {
       props,
     } = args;
-    // === Props Attribute ===
+
     /** @type {import('./timeline-app').TimelineApplicationOptions} */
     this.props = props
+
+    // === Props Attribute ===
 
     // === Base Attribute ===
     /** @type {number} */
     this.paddingTop = 0
     /** @type {number} */
-    this.paddingBottom = 12
+    this.paddingBottom = 20
     /** @type {number} */
     this.scaleHeight = 6
     /** @type {number} */

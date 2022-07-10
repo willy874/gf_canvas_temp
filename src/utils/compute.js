@@ -23,16 +23,13 @@ export function getTextWidth(text, font) {
  * @param {number} y 
  * @param {number} angle 
  * @param {number} distance 
- * @returns 
+ * @returns {[number,number]}
  */
 export function getEndPointByTrigonometric(x, y, angle, distance) {
   const radian = (angle * Math.PI) / 180;
   const endPointX = x + distance * Math.cos(radian);
   const endPointY = y + distance * Math.sin(radian);
-  return {
-    x: endPointX,
-    y: endPointY
-  };
+  return [endPointX, endPointY]
 }
 
 /**

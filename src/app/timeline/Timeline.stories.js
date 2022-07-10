@@ -57,7 +57,7 @@ const list = [{
   startTime: dayjs('2022/04/01').valueOf(),
   endTime: dayjs('2022/04/25').valueOf(),
   title: '這是攻擊3',
-  eventTypeId: 1
+  eventTypeId: 1,
 }, {
   id: 4,
   startTime: dayjs('2022/04/21').valueOf(),

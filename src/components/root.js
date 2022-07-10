@@ -21,11 +21,15 @@ export default class RootContainer extends BaseContainer {
       this.tickerRender(t)
     })
     const {
-      props
+      props,
+      app
     } = args
+
     // === Base Attribute ===
     /** @type {any} */
     this.props = props
+    /** @type {Application} */
+    this.app = app
     /** @type {boolean} */
     this.isStopPropagation = false
     /** @type {boolean} */

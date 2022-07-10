@@ -49,22 +49,24 @@ class ICollection<T> {
   delete(key: PrimaryKeyType): void
   getList(sort: Array<PrimaryKeyType | T>): T[]
 }
+
 // 理想的 Model
 interface ITimeLimeChartModel {
-  id: number
+  id: number | string
   startTime: number
   endTime: number
   title: string
   eventTypeId: number
 }
+
 interface IEventTypeModel {
   id: number
   name: string
   collapse: boolean
   data: ITimeLimeChartModel[]
 }
+
 interface MatrixInfo {
   row: number
-  column: number
-  matrix: string[][]
+  matrix: string[]
 }

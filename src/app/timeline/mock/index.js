@@ -48,6 +48,7 @@ function handleEventData(args) {
           return {
             ...attack,
             ...event,
+            id: attack.event_id,
             title: attack.event_id,
             startTime: new Date(event.inScrubbingCenterTime).valueOf(),
             endTime: event.outScrubbingCenterTime ? new Date(event.outScrubbingCenterTime).valueOf() : new Date(event.outScrubbingCenterTime).valueOf() + 1,
@@ -61,6 +62,7 @@ function handleEventData(args) {
         data: maintenanceList.map(maintenance => {
           return {
             ...maintenance,
+            id: maintenance.event_id,
             title: maintenance.event_id,
             startTime: new Date(maintenance.scheduled_start_time).valueOf(),
             endTime: new Date(maintenance.scheduled_end_time).valueOf()

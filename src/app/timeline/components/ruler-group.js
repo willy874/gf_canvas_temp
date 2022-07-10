@@ -13,14 +13,18 @@ export default class RulerGroup extends BaseContainer {
     const {
       props,
     } = args
-    // === Props Attribute ===
+
     /** @type {import('./timeline-app').TimelineApplicationOptions} */
     this.props = props
+
+    // === Components ===
     const {
       DateLine,
     } = this.props.getComponents()
     /** @type {import('./dateline').default} */
     this.DateLine = DateLine;
+
+    // === Props Attribute ===
 
     // === Base Attribute ===
     /** 

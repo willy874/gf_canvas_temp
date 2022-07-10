@@ -131,4 +131,19 @@ export default class BasePrototype extends Container {
     this.update(t)
     this.draw()
   }
+
+  findParentComponent(containerClass) {
+    /** @type {Container} */
+    let target = this
+    while (true) {
+      if (containerClass && target instanceof containerClass) {
+        return target
+      }
+      if (target.parent) {
+        target = target.parent
+      } else {
+        return target
+      }
+    }
+  }
 }
