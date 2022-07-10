@@ -1,11 +1,13 @@
+const baseUrl = 'http://127.0.0.1:8082'
+
 function fetchToken() {
   return new Promise((resolve) => {
     const token = localStorage.getItem('willyToken')
     if (token) {
-      fetch('http://127.0.0.1:8082/api/v1/oauth').then((res) => res.json()).then(({
+      fetch(baseUrl + '/api/v1/oauth').then((res) => res.json()).then(({
         data
       }) => {
-        return fetch('http://127.0.0.1:8082/oauth/token', {
+        return fetch(baseUrl + '/oauth/token', {
           method: 'POST',
           headers: new Headers({
             'Content-Type': 'application/json'
@@ -88,9 +90,9 @@ export function fetchEventData(bool) {
       }),
     }
     return Promise.all([
-      fetch('http://127.0.0.1:8082/api/v1/event_types', request).then((res) => res.json()),
-      fetch('http://127.0.0.1:8082/api/v1/events', request).then((res) => res.json()),
-      fetch('http://127.0.0.1:8082/api/v1/supplier-maintenance-events', request).then((res) => res.json()),
+      fetch(baseUrl + '/api/v1/event_types', request).then((res) => res.json()),
+      fetch(baseUrl + '/api/v1/events', request).then((res) => res.json()),
+      fetch(baseUrl + '/api/v1/supplier-maintenance-events', request).then((res) => res.json()),
     ])
   }).then(handleEventData)
 }
