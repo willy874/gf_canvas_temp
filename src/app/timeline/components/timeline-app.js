@@ -94,17 +94,17 @@ export default class TimelineApplication {
       if (data) {
         this.options.types = data
         this.eventChart.init()
-        data.forEach(typeModel => {
-          const map = {};
-          typeModel.data.forEach(p => {
-            if (map[p.inScrubbingCenterTime]) {
-              map[p.inScrubbingCenterTime].push(p)
-            } else {
-              map[p.inScrubbingCenterTime] = [p]
-            }
-          });
-          console.log(typeModel.name, 'Event', map);
-        })
+        // data.forEach(typeModel => {
+        //   const map = {};
+        //   typeModel.data.forEach(p => {
+        //     if (map[p.inScrubbingCenterTime]) {
+        //       map[p.inScrubbingCenterTime].push(p)
+        //     } else {
+        //       map[p.inScrubbingCenterTime] = [p]
+        //     }
+        //   });
+        //   console.log(typeModel.name, 'Event', map);
+        // })
       }
     })
   }
