@@ -5,6 +5,7 @@ import {
   Graphics,
 } from '@base/pixi';
 import {
+  Collection,
   GlobalEvent
 } from '@base/utils';
 import {
@@ -34,6 +35,8 @@ export default class EventChart extends BaseContainer {
     // === Base Attribute ===
     /** @type {number} */
     this.translateY = 0;
+    /** @type {ICollection} */
+    this.collection = new Collection()
 
     GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onPointmove(e))
 
@@ -58,6 +61,7 @@ export default class EventChart extends BaseContainer {
         sort: index,
         DateLine: this.DateLine,
         RulerLine: this.RulerLine,
+        collection: this.collection
       })
     })
   }

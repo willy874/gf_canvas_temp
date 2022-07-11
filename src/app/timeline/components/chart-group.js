@@ -13,6 +13,7 @@ export default class ChartGroup extends BaseContainer {
     const {
       props,
       sort,
+      collection
     } = args;
 
     /** @type {import('./timeline-app').TimelineApplicationOptions} */
@@ -31,8 +32,10 @@ export default class ChartGroup extends BaseContainer {
     // === Props Attribute ===
     /** @type {number} */
     this.sort = sort;
-    /** @type {string[][]} */
-    this.matrix = [];
+    // /** @type {string[][]} */
+    this.matrix = new TimeMatrix(collection);
+
+    // === Base Attribute ===
     /** @type {ChartItem[]} */
     this.charItemList = [];
     /** @type {IEventTypeModel} */
@@ -46,10 +49,9 @@ export default class ChartGroup extends BaseContainer {
     /** @type {number} */
     this.chartPaddingY = 4
 
-    this.chartItemGraphics = new Graphics()
-    this.coordinatesGraphics = new Graphics()
+    this.graphics = new Graphics()
     this.create()
-    this.addChild(this.chartItemGraphics)
+    this.addChild(this.graphics)
   }
 
   init() {
@@ -77,7 +79,8 @@ export default class ChartGroup extends BaseContainer {
       model,
       matrixInfo,
       chartHeight: this.chartHeight,
-      chartPaddingY: this.chartPaddingY
+      chartPaddingY: this.chartPaddingY,
+      graphics: this.graphics
     })
   }
 
@@ -85,7 +88,7 @@ export default class ChartGroup extends BaseContainer {
    * @return {number}
    */
   getCharGroupHeight() {
-    return this.matrix.length * (this.chartHeight + this.chartPaddingY * 2) + this.paddingY * 2
+    return this.matrix.current.length * (this.chartHeight + this.chartPaddingY * 2) + this.paddingY * 2
   }
 
   /**
@@ -93,19 +96,31 @@ export default class ChartGroup extends BaseContainer {
    * @returns {ChartItem[]}
    */
   getCharItemList(list) {
-    return TimeMatrix.getMappingModel(list, this.matrix).map((matrix, index) => this.getCharItem(list[index], matrix))
+    return this.matrix.getMappingModel(list).map((matrix, index) => this.getCharItem(list[index], matrix))
   }
 
   /**
    * @param {number} left
-   * @param {number} top
+   * @param {number} width
    * @return {boolean}
    */
-  isShow(left, top) {
+  isShowX(left, width) {
+    const right = this.DateLine.baseX - this.props.translateX
+    const isRightLimit = left <= right - this.paddingX
+    const isLeftLimit = left + width >= right - this.DateLine.lineWidth + this.paddingX * 2
+    return isRightLimit && isLeftLimit
+  }
+
+  /**
+   * @param {number} top
+   * @param {number} height
+   * @return {boolean}
+   */
+  isShowY(top, height) {
     const chartGroupHeight = this.DateLine.y + this.DateLine.textHeight + this.DateLine.scaleHeight + this.props.lineSolidWidth + this.DateLine.paddingBottom
     const isTopLimit = top >= 0
-    const isTopBottom = top <= this.props.canvasHeight - chartGroupHeight - this.RulerLine.plusButtonSize * 3
-    return isTopLimit && isTopBottom
+    const isBottomLimit = top + height <= this.props.canvasHeight - chartGroupHeight - this.RulerLine.plusButtonSize * 3
+    return isTopLimit && isBottomLimit
   }
 
   /**
@@ -119,18 +134,18 @@ export default class ChartGroup extends BaseContainer {
 
   drawChartItem() {
     this.charItemList.forEach(item => {
-      if (this.isShow(this.x, this.y + item.top)) {
-        item.draw(this.chartItemGraphics)
+      if (this.isShowX(this.x + item.left, item.width) && this.isShowY(this.y + item.top, item.height)) {
+        item.draw()
       }
     })
   }
 
   drawDivider() {
     const lineDiff = 0 - this.paddingY
-    if (this.sort && this.isShow(this.x, this.y + lineDiff)) {
-      this.chartItemGraphics.lineStyle(1, 0xEEEEEE)
-      this.chartItemGraphics.moveTo(this.paddingX, lineDiff)
-      this.chartItemGraphics.lineTo(this.props.canvasWidth - this.paddingX * 2, lineDiff)
+    if (this.sort && this.isShowY(this.y + lineDiff, 1)) {
+      this.graphics.lineStyle(1, 0xEEEEEE)
+      this.graphics.moveTo(this.paddingX, lineDiff)
+      this.graphics.lineTo(this.props.canvasWidth - this.paddingX * 2, lineDiff)
     }
   }
 

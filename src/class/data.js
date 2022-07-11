@@ -52,23 +52,32 @@ export class EventModel {
  * @property {number} column 
  */
 export class TimeMatrix {
+  constructor(collection) {
+    this.current = []
+    /** @type {ICollection<ChartModel>} */
+    this.collection = collection
+  }
+
   /**
    * @param {string} prev 
    * @param {string} current 
-   * @param {string} value 
+   * @param {string} target 
    * @returns {boolean}
    */
-  static isPrepend(prev, current, value) {
+  isPrepend(prev, current, target) {
+    const _current = this.collection.get(current)
+    const _prev = this.collection.get(prev)
+    const _target = this.collection.get(target)
     // 確認是不是 index 0
     if (prev) {
-      const modelStartTime = Number(value.match(/^\d+/)[0])
-      const modelEndTime = Number(value.match(/\d+$/)[0])
-      const prevEndTime = Number(prev.match(/\d+$/)[0])
-      const currentStartTime = Number(current.match(/^\d+/)[0])
+      const modelStartTime = _target.startTime
+      const modelEndTime = _target.endTime
+      const prevEndTime = _prev.endTime
+      const currentStartTime = _current.startTime
       return prevEndTime <= modelStartTime && modelEndTime <= currentStartTime
     } else {
-      const modelEndTime = Number(value.match(/\d+$/)[0])
-      const currentStartTime = Number(current.match(/^\d+/)[0])
+      const modelEndTime = _target.endTime
+      const currentStartTime = _current.startTime
       return modelEndTime <= currentStartTime
     }
   }
@@ -76,20 +85,23 @@ export class TimeMatrix {
   /**
    * @param {string} current 
    * @param {string} next 
-   * @param {string} value 
+   * @param {string} target 
    * @returns {boolean}
    */
-  static isAppend(current, next, value) {
+  isAppend(current, next, target) {
+    const _current = this.collection.get(current)
+    const _next = this.collection.get(next)
+    const _target = this.collection.get(target)
     // 確認是不是 index last
     if (next) {
-      const modelStartTime = Number(value.match(/^\d+/)[0])
-      const modelEndTime = Number(value.match(/\d+$/)[0])
-      const nextStartTime = Number(next.match(/^\d+/)[0])
-      const currentEndTime = Number(current.match(/\d+$/)[0])
+      const modelStartTime = _target.startTime
+      const modelEndTime = _target.endTime
+      const nextStartTime = _next.startTime
+      const currentEndTime = _current.endTime
       return currentEndTime <= modelStartTime && modelEndTime <= nextStartTime
     } else {
-      const modelStartTime = Number(value.match(/^\d+/)[0])
-      const currentEndTime = Number(current.match(/\d+$/)[0])
+      const modelStartTime = _target.startTime
+      const currentEndTime = _current.endTime
       return currentEndTime <= modelStartTime
     }
   }
@@ -99,22 +111,27 @@ export class TimeMatrix {
    * @param {string} value 
    * @returns {number}  當成功插入回傳 index，當找不到插入節點回傳 -1
    */
-  static addMatrix(matrix, value) {
+  addMatrix(matrix, value) {
     let insertIndex = -1
-    for (let index = 0; index < matrix.length; index++) {
-      // console.log(value, TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value) && 'isPrepend');
-      if (TimeMatrix.isPrepend(matrix[index - 1], matrix[index], value)) {
-        insertIndex = index
-        // console.log('isPrepend', insertIndex);
-        break
-      }
-      // console.log(value, TimeMatrix.isAppend(matrix[index], matrix[index + 1], value) && 'isAppend');
-      if (TimeMatrix.isAppend(matrix[index], matrix[index + 1], value)) {
-        insertIndex = index + 1
-        // console.log('isAppend', insertIndex);
-        break
+    if (this.isPrepend(null, matrix[0], value)) {
+      insertIndex = 0
+    }
+    if (this.isAppend(matrix[matrix.length - 1], null, value)) {
+      insertIndex = matrix.length - 1
+    }
+    if (insertIndex === -1) {
+      for (let index = 0; index < matrix.length; index++) {
+        if (this.isPrepend(matrix[index - 1], matrix[index], value)) {
+          insertIndex = index
+          break
+        }
+        if (this.isAppend(matrix[index], matrix[index + 1], value)) {
+          insertIndex = index + 1
+          break
+        }
       }
     }
+    // console.log(insertIndex);
     if (insertIndex >= 0) {
       matrix.splice(insertIndex, 0, value)
       return insertIndex
@@ -127,14 +144,14 @@ export class TimeMatrix {
    * @param {string[][]} matrix
    * @returns {number[]}
    */
-  static getMatrixRowList(list, matrix) {
+  getMatrixRowList(list, matrix) {
     return list.map(value => {
       let row = 0
       let matrixRow
       while (true) {
         matrixRow = matrix[row]
         if (matrixRow) {
-          if (TimeMatrix.addMatrix(matrixRow, value) >= 0) {
+          if (this.addMatrix(matrixRow, value) >= 0) {
             break
           }
         } else {
@@ -149,13 +166,17 @@ export class TimeMatrix {
 
   /**
    * @param {ChartModel[]} list
-   * @param {string[][]} matrix
    */
-  static getMappingModel(list, matrix) {
-    const timeList = list.map(model => `${model.startTime}-${model.id}-${model.endTime}`)
-    const rowList = TimeMatrix.getMatrixRowList(timeList, matrix)
+  getMappingModel(list) {
+    const matrix = this.current
+    const idList = list.map(model => {
+      const id = String(model.id)
+      this.collection.set(id, model)
+      return id
+    })
+    const rowList = this.getMatrixRowList(idList, matrix)
     return rowList.map((row, index) => {
-      const time = timeList[index]
+      const time = idList[index]
       return {
         time,
         row,

@@ -1,4 +1,4 @@
-const baseUrl = 'http://127.0.0.1:8082'
+const baseUrl = 'http://127.0.0.1:8000'
 
 function fetchToken() {
   return new Promise((resolve) => {
@@ -48,8 +48,8 @@ function handleEventData(args) {
         data: attackList.map(attack => {
           const event = JSON.parse(attack.event)
           return {
-            ...attack,
-            ...event,
+            // ...attack,
+            // ...event,
             id: attack.event_id,
             title: attack.event_id,
             startTime: new Date(event.inScrubbingCenterTime).valueOf(),
@@ -63,7 +63,7 @@ function handleEventData(args) {
         ...type,
         data: maintenanceList.map(maintenance => {
           return {
-            ...maintenance,
+            // ...maintenance,
             id: maintenance.event_id,
             title: maintenance.event_id,
             startTime: new Date(maintenance.scheduled_start_time).valueOf(),
