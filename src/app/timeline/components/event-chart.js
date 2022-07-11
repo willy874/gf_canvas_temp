@@ -3,6 +3,7 @@ import BaseContainer from '@base/components/base-container'
 import ChartGroup from './chart-group'
 import {
   Graphics,
+  Text
 } from '@base/pixi';
 import {
   Collection,
@@ -37,20 +38,46 @@ export default class EventChart extends BaseContainer {
     this.translateY = 0;
     /** @type {ICollection} */
     this.collection = new Collection()
+    /** @type {number} */
+    this.tipX = 0
+    /** @type {number} */
+    this.tipY = 0
+    /** @type {boolean} */
+    this.isShowTip = false
+    /** @type {import('@base/app/timeline/components/chart-item').default} */
+    this.target = null
+    /** @type {Text} */
+    this.tipText = new Text('', {
+      fontWeight: '400',
+      fontSize: this.props.fontSize,
+      fontFamily: this.props.fontFamily
+    })
 
-    GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onPointmove(e))
+    GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onScalemove(e))
+    GlobalEvent.on(EventType.CANVASMOVE, (e) => this.onCanvasMove(e))
 
-    this.graphics = new Graphics()
+    this.tipGraphics = new Graphics()
     this.create()
   }
 
   /**
    * @param {PointerEvent} event 
    */
-  onPointmove(event) {
+  onScalemove(event) {
     const top = this.translateY + event.movementY
     if (top <= 0) {
       this.translateY = top
+    }
+  }
+
+  /**
+   * @param {InteractionEvent} event 
+   */
+   onCanvasMove(event) {
+    const originalEvent = event.data.originalEvent
+    if (originalEvent instanceof MouseEvent || originalEvent instanceof PointerEvent) {
+      this.tipX = originalEvent.offsetX
+      this.tipY = originalEvent.offsetY - this.DateLine.clientHeight
     }
   }
 
@@ -68,12 +95,39 @@ export default class EventChart extends BaseContainer {
 
   init() {
     const children = this.getCharGroup()
-    this.refreshChildren(...children)
+    this.refreshChildren(...children, this.tipGraphics, this.tipText)
+  }
+
+  draw() {
+    this.children.forEach(container => {
+      if (container instanceof ChartGroup) {
+        const offsetX = 12
+        const offsetY = 12
+        const paddingX = 8
+        const paddingY = 8
+        if (this.target) {
+          this.tipText.alpha = Number(this.isShowTip)
+          this.tipText.text = this.target.model.title
+        }
+        const width = this.tipText.width + paddingX * 2
+        const height = this.tipText.height + paddingY * 2
+        const tipX = this.tipX + width >= this.props.canvasWidth ? this.tipX - width : this.tipX
+        const tipY = this.tipY + height >= this.props.canvasHeight ? this.tipY - height : this.tipY
+        if (this.target) {
+          this.tipText.x = tipX + offsetX + paddingX
+          this.tipText.y = tipY + offsetY + paddingY
+        }
+        this.tipGraphics
+          .beginFill(0xEEEEEE, Number(this.isShowTip))
+          .lineStyle(1, 0xBDBDBD, Number(this.isShowTip))
+          .drawRoundedRect(tipX + offsetX, tipY + offsetY, width, height, 8)
+      }
+    })
   }
 
   update(t) {
     // 計算自己的碰撞座標
-    this.y = this.DateLine.y + this.DateLine.textHeight + this.DateLine.scaleHeight + this.props.lineSolidWidth + this.DateLine.paddingBottom
+    this.y = this.DateLine.clientHeight
     // 計算群組高度給予碰撞
     let y = this.translateY
     this.children.forEach(container => {

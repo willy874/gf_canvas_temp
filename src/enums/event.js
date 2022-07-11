@@ -13,6 +13,9 @@ export const EventType = {
   MOUSEOVER: 'mouseover',
   MOUSEUP: 'mouseup',
   POINTERMOVE: 'pointermove',
+  POINTEROVER: 'pointerover',
+  POINTEROUT: 'pointerout',
   WEBGLCONTEXTLOST: 'webglcontextlost',
   WEBGLCONTEXTRESTORED: 'webglcontextrestored',
+  CANVASMOVE: 'canvasmove',
 }

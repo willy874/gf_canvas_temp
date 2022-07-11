@@ -84,16 +84,27 @@ export default class RootContainer extends BaseContainer {
     this.dragTriggedCount++
     const originalEvent = event.data.originalEvent
     if (originalEvent instanceof PointerEvent || originalEvent instanceof MouseEvent) {
-      if (this.isScaleDrag) {
-        this.onScalemove(originalEvent)
-      }
-      if (this.isRulerDrag) {
-        this.onRulermove(originalEvent)
+      switch (true) {
+        case this.isScaleDrag:
+          this.onScalemove(originalEvent)
+          break;
+        case this.isRulerDrag:
+          this.onRulermove(originalEvent)
+          break;
+        default: 
+          this.onCanvasMove(event)
       }
     }
     if (originalEvent instanceof TouchEvent) {
       // 觸控處理
     }
+  }
+  
+  /**
+   * @param {InteractionEvent} event 
+   */
+  onCanvasMove(event) {
+    GlobalEvent.emit(EventType.CANVASMOVE, event)
   }
 
   /**
@@ -135,10 +146,7 @@ export default class RootContainer extends BaseContainer {
    */
   onDragStart(event) {
     // 切換 cursor
-    this.getApplication().view.style.cursor = 'all-scroll'
-    const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles
-    cursorStyles.default = 'all-scroll'
-    cursorStyles.pointer = 'all-scroll'
+    this.setCursor('all-scroll')
   }
 
   /**
@@ -149,10 +157,14 @@ export default class RootContainer extends BaseContainer {
     this.isRulerDrag = false
     this.target = null
     this.dragTriggedCount = 0
+    this.setCursor()
+  }
+
+  setCursor(type) {
     // 切換 cursor
-    this.getApplication().view.style.cursor = 'default'
+    this.getApplication().view.style.cursor = type || 'default'
     const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles
-    cursorStyles.default = 'default'
-    cursorStyles.pointer = 'pointer'
+    cursorStyles.default = type || 'default'
+    cursorStyles.pointer = type || 'pointer'
   }
 }

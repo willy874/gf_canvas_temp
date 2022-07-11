@@ -4,8 +4,13 @@ import {
 import BaseContainer from '@base/components/base-container'
 import ChartItem from './chart-item'
 import {
+  EventType,
   TimeMatrix
 } from '@base/class'
+import {
+  getEndPointByTrigonometric
+} from '@base/utils'
+// import { GlobalEvent } from '@base/utils';
 
 export default class ChartGroup extends BaseContainer {
   constructor(args) {
@@ -48,14 +53,44 @@ export default class ChartGroup extends BaseContainer {
     this.chartHeight = 2
     /** @type {number} */
     this.chartPaddingY = 4
-
+    /** @type {Graphics} */
     this.graphics = new Graphics()
+    /** @type {Graphics[]} */
+    this.coordinatesList = []
+
     this.create()
-    this.addChild(this.graphics)
   }
+
+  // /**
+  //  * @param {InteractionEvent} event 
+  //  */
+  // onPointover(event) {
+  //   this.isShowTip = true
+  // }
+
+  // /**
+  //  * @param {InteractionEvent} event 
+  //  */
+  // onPointout(event) {
+  //   this.isShowTip = false
+  // }
 
   init() {
     this.charItemList = this.getCharItemList(this.model.data)
+    this.coordinatesList = this.charItemList.map(item => {
+      const graphics = new Graphics()
+      graphics.interactive = true
+      graphics.buttonMode = true
+      graphics.on(EventType.POINTEROVER, (e) => {
+        this.parent.target = item
+        this.parent.isShowTip = true
+      })
+      graphics.on(EventType.POINTEROUT, (e) => {
+        this.parent.isShowTip = false
+      })
+      return graphics
+    })
+    this.refreshChildren(this.graphics, ...this.coordinatesList)
   }
 
   /**
@@ -149,9 +184,50 @@ export default class ChartGroup extends BaseContainer {
     }
   }
 
+  drawCoordinatesList() {
+    if (this.props.isShowCoordinates) {
+      this.charItemList.forEach((item, index) => this.drawCoordinates(item, index))
+    }
+  }
+
+  drawCoordinates(item, index) {
+    const graphics = this.coordinatesList[index]
+    const top = item.top + item.height / 2 - item.chartHeight
+    if (item.width > item.chartHeight) {
+      this.drawCoordinateItem(graphics, item.left, top)
+      this.drawCoordinateItem(graphics, item.left + item.width, top)
+    } else {
+      this.drawCoordinateItem(graphics, item.left + item.width / 2, top)
+    }
+  }
+
+  /**
+   * @param {number} x 
+   * @param {number} y
+   */
+  drawCoordinateItem(graphics, x, y) {
+    const color = this.getColor(this.sort)
+    const point1 = getEndPointByTrigonometric(x, y, 115, -11)
+    const point2 = getEndPointByTrigonometric(x, y, 65, -11)
+    const point3 = getEndPointByTrigonometric(x, y, 90, -13)
+    graphics
+      .beginFill(0x6C6C6C)
+      .lineStyle(1, 0x6C6C6C)
+      .drawPolygon([
+        ...[x, y],
+        ...point1,
+        ...point2
+      ])
+      .drawCircle(...point3, 6)
+      .beginFill(color)
+      .lineStyle(1, color)
+      .drawCircle(...point3, 3)
+  }
+
   draw() {
     this.drawDivider()
     this.drawChartItem()
+    this.drawCoordinatesList()
   }
 
 }

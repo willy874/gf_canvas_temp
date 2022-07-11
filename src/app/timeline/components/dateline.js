@@ -63,6 +63,8 @@ export default class DateLine extends BaseContainer {
     this.lineBaseY = 0
     /** @type {number} */
     this.baseX = 0
+    /** @type {number} */
+    this.clientHeight = 0
     /** @type {Text} */
     this.endTimeText = null
     /** @type {number[]} */
@@ -212,6 +214,7 @@ export default class DateLine extends BaseContainer {
    * ```
    */
   updateTextsPosition() {
+    this.clientHeight = this.y + this.textHeight + this.scaleHeight + this.props.lineSolidWidth + this.paddingBottom
     this.textLeftList.forEach((left, index) => {
       const text = this.textList[index]
       text.x = left

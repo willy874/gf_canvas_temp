@@ -5,7 +5,11 @@ export class GlobalEvent {
   static on(type, callback) {
     const id = Symbol(type)
     const listener = (event) => {
-      callback(event.detail)
+      if (event instanceof CustomEvent) {
+        callback(event.detail)
+      } else {
+        callback(event)
+      }
     }
     eventMap.set(id, )
     window.addEventListener(type, listener)
