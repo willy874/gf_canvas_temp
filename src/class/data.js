@@ -117,7 +117,7 @@ export class TimeMatrix {
       insertIndex = 0
     }
     if (this.isAppend(matrix[matrix.length - 1], null, value)) {
-      insertIndex = matrix.length - 1
+      insertIndex = matrix.length
     }
     if (insertIndex === -1) {
       for (let index = 0; index < matrix.length; index++) {
@@ -131,12 +131,36 @@ export class TimeMatrix {
         }
       }
     }
-    // console.log(insertIndex);
     if (insertIndex >= 0) {
-      matrix.splice(insertIndex, 0, value)
+      this.insertByIndex(matrix, insertIndex, value)
       return insertIndex
     }
     return insertIndex
+  }
+
+
+  /**
+   * @template T
+   * @param {T[]} array 
+   * @param {number} index 
+   * @param {T} value 
+   * @returns {T[]}
+   */
+  insertByIndex(array, index, value) {
+    if (array.length > 10000) {
+      let prev = value
+      let current = null
+      while (array[index]) {
+        current = array[index]
+        array[index] = prev
+        prev = current
+        index++
+      }
+      array[index] = prev
+    } else {
+      array.splice(index, 0, value)
+    }
+    return array
   }
 
   /**
