@@ -53,7 +53,7 @@ function handleEventData(args) {
             id: attack.event_id,
             title: attack.event_id,
             startTime: new Date(event.inScrubbingCenterTime).valueOf(),
-            endTime: event.outScrubbingCenterTime ? new Date(event.outScrubbingCenterTime).valueOf() : new Date(event.outScrubbingCenterTime).valueOf() + 1,
+            endTime: event.outScrubbingCenterTime ? new Date(event.outScrubbingCenterTime).valueOf() : (new Date(event.inScrubbingCenterTime).valueOf() + 1),
           }
         })
       }
