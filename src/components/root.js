@@ -49,6 +49,8 @@ export default class RootContainer extends BaseContainer {
     this.on(EventType.MOUSEUP, (e) => this.onMouseup(e))
     this.on(EventType.MOUSEOVER, (e) => this.onMouseover(e))
 
+    this.getApplication().renderer.plugins.interaction.cursorStyles['all-scroll'] = 'all-scroll'
+
     this.graphics = new Graphics()
     this.addChild(this.graphics)
   }
@@ -94,9 +96,6 @@ export default class RootContainer extends BaseContainer {
         default: 
           this.onCanvasMove(event)
       }
-    }
-    if (originalEvent instanceof TouchEvent) {
-      // 觸控處理
     }
   }
   
@@ -160,11 +159,9 @@ export default class RootContainer extends BaseContainer {
     this.setCursor()
   }
 
-  setCursor(type) {
-    // 切換 cursor
-    this.getApplication().view.style.cursor = type || 'default'
-    const cursorStyles = this.getApplication().renderer.plugins.interaction.cursorStyles
-    cursorStyles.default = type || 'default'
-    cursorStyles.pointer = type || 'pointer'
+  setCursor(type = 'default') {
+    console.log(type);
+    this.getApplication().renderer.plugins.interaction.setCursorMode(type)
+    // this.getApplication().view.style.cursor = type
   }
 }

@@ -36,7 +36,7 @@ export default class EventChart extends BaseContainer {
     // === Base Attribute ===
     /** @type {number} */
     this.translateY = 0;
-    /** @type {ICollection} */
+    /** @type {ICollection<ITimeLimeChartModel>} */
     this.collection = new Collection()
     /** @type {number} */
     this.tipX = 0
@@ -44,7 +44,8 @@ export default class EventChart extends BaseContainer {
     this.tipY = 0
     /** @type {boolean} */
     this.isShowTip = false
-    /** @type {import('@base/app/timeline/components/chart-item').default} */
+    // /** @type {import('@base/app/timeline/components/chart-item').default} */
+    /** @type {ITimeLimeChartModel} */
     this.target = null
     /** @type {Text} */
     this.tipText = new Text('', {
@@ -56,12 +57,35 @@ export default class EventChart extends BaseContainer {
     GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onScalemove(e))
     GlobalEvent.on(EventType.CANVASMOVE, (e) => this.onCanvasMove(e))
 
+    /** @type {Graphics} */
+    this.graphics = new Graphics()
+    /** @type {Graphics} */
     this.tipGraphics = new Graphics()
     this.create()
   }
 
   /**
-   * @param {PointerEvent} event 
+   * @param {PointerEvent|MouseEvent} event 
+   */
+  onPointmove(event) {
+    let isCollision
+    this.children.forEach(container => {
+      if (container instanceof ChartGroup) {
+        container.coordinatesList.forEach(coordinate => {
+          if (coordinate.isCollision(event.clientX - container.x - container.paddingX, event.clientY - container.y - container.getClientTop())) {
+            this.target = this.collection.get(coordinate.eventId)
+            isCollision = true
+          }
+        })
+      }
+    })
+    if (!isCollision) {
+      this.target = null
+    }
+  }
+
+  /**
+   * @param {PointerEvent|MouseEvent} event 
    */
   onScalemove(event) {
     const top = this.translateY + event.movementY
@@ -78,6 +102,7 @@ export default class EventChart extends BaseContainer {
     if (originalEvent instanceof MouseEvent || originalEvent instanceof PointerEvent) {
       this.tipX = originalEvent.offsetX
       this.tipY = originalEvent.offsetY - this.DateLine.clientHeight
+      this.onPointmove(originalEvent)
     }
   }
 
@@ -88,7 +113,8 @@ export default class EventChart extends BaseContainer {
         sort: index,
         DateLine: this.DateLine,
         RulerLine: this.RulerLine,
-        collection: this.collection
+        collection: this.collection,
+        graphics: this.graphics
       })
     })
   }
@@ -98,31 +124,37 @@ export default class EventChart extends BaseContainer {
     this.refreshChildren(...children, this.tipGraphics, this.tipText)
   }
 
+  drawTip() {
+    const tipAlpha = Number(this.target ? 1 : 0)
+    const offsetX = 12
+    const offsetY = 12
+    const paddingX = 8
+    const paddingY = 8
+    this.tipText.alpha = tipAlpha
+    if (tipAlpha) {
+      this.tipText.text = this.target.title
+    }
+    const width = this.tipText.width + paddingX * 2
+    const height = this.tipText.height + paddingY * 2
+    const tipX = this.tipX + width >= this.props.canvasWidth ? this.tipX - width : this.tipX
+    const tipY = this.tipY + height >= this.props.canvasHeight ? this.tipY - height : this.tipY
+    if (tipAlpha) {
+      this.tipText.x = tipX + offsetX + paddingX
+      this.tipText.y = tipY + offsetY + paddingY
+    }
+    this.tipGraphics
+      .beginFill(0xEEEEEE, tipAlpha)
+      .lineStyle(1, 0xBDBDBD, tipAlpha)
+      .drawRoundedRect(tipX + offsetX, tipY + offsetY, width, height, 8)
+  }
+
   draw() {
-    this.children.forEach(container => {
-      if (container instanceof ChartGroup) {
-        const offsetX = 12
-        const offsetY = 12
-        const paddingX = 8
-        const paddingY = 8
-        if (this.target) {
-          this.tipText.alpha = Number(this.isShowTip)
-          this.tipText.text = this.target.model.title
-        }
-        const width = this.tipText.width + paddingX * 2
-        const height = this.tipText.height + paddingY * 2
-        const tipX = this.tipX + width >= this.props.canvasWidth ? this.tipX - width : this.tipX
-        const tipY = this.tipY + height >= this.props.canvasHeight ? this.tipY - height : this.tipY
-        if (this.target) {
-          this.tipText.x = tipX + offsetX + paddingX
-          this.tipText.y = tipY + offsetY + paddingY
-        }
-        this.tipGraphics
-          .beginFill(0xEEEEEE, Number(this.isShowTip))
-          .lineStyle(1, 0xBDBDBD, Number(this.isShowTip))
-          .drawRoundedRect(tipX + offsetX, tipY + offsetY, width, height, 8)
-      }
-    })
+    this.drawTip()
+    // this.children.forEach(container => {
+    //   if (container instanceof ChartGroup) {
+    //     // 
+    //   }
+    // })
   }
 
   update(t) {
