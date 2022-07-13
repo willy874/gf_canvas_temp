@@ -25,8 +25,6 @@ interface TimeLimeChartItemInfo extends GraphicsInfo {
   model: EventModel
 }
 
-interface IEventCollection<T> extends ICollection<T> {}
-
 interface IEventModel {
   id: number
   startTime: number

@@ -9,6 +9,14 @@ import {
 } from '@base/utils'
 import BaseContainer from "./base-container"
 
+// class CanvasMoveEvent extends CustomEvent {
+//   /**
+//    * @param {InteractionEvent} event 
+//    */
+//   constructor(event) {
+//     super(EventType.CANVASMOVE, { detail: event })
+//   }
+// }
 
 export default class RootContainer extends BaseContainer {
   /**
@@ -74,7 +82,6 @@ export default class RootContainer extends BaseContainer {
    * @param {InteractionEvent} event 
    */
   onMousedown(event) {
-    // console.log('onMouseout', event, event.data.global, event.target);
     this.onDragStart(event)
     this.isScaleDrag = true
   }
@@ -110,6 +117,9 @@ export default class RootContainer extends BaseContainer {
    * @param {PointerEvent | MouseEvent} event 
    */
   onScalemove(event) {
+    if (this.dragTriggedCount >= 5) {
+      this.setCursor('all-scroll')
+    }
     GlobalEvent.emit(EventType.SCALEMOVE, event)
   }
 
@@ -117,6 +127,9 @@ export default class RootContainer extends BaseContainer {
    * @param {PointerEvent | MouseEvent} event 
    */
   onRulermove(event) {
+    if (this.dragTriggedCount >= 5) {
+      this.setCursor('all-scroll')
+    }
     GlobalEvent.emit(EventType.RULERMOVE, event)
   }
 
@@ -136,7 +149,6 @@ export default class RootContainer extends BaseContainer {
    * @param {InteractionEvent} event 
    */
   onMouseup(event) {
-    // console.log('onMouseup');
     this.onDragEnd(event)
   }
 
@@ -144,8 +156,6 @@ export default class RootContainer extends BaseContainer {
    * @param {InteractionEvent| Event} event 
    */
   onDragStart(event) {
-    // 切換 cursor
-    this.setCursor('all-scroll')
   }
 
   /**
@@ -160,8 +170,6 @@ export default class RootContainer extends BaseContainer {
   }
 
   setCursor(type = 'default') {
-    console.log(type);
-    this.getApplication().renderer.plugins.interaction.setCursorMode(type)
-    // this.getApplication().view.style.cursor = type
+    this.getApplication().renderer.plugins.interaction.cursor = type
   }
 }

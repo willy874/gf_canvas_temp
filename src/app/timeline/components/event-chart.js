@@ -44,7 +44,6 @@ export default class EventChart extends BaseContainer {
     this.tipY = 0
     /** @type {boolean} */
     this.isShowTip = false
-    // /** @type {import('@base/app/timeline/components/chart-item').default} */
     /** @type {ITimeLimeChartModel} */
     this.target = null
     /** @type {Text} */
@@ -89,9 +88,18 @@ export default class EventChart extends BaseContainer {
    */
   onScalemove(event) {
     const top = this.translateY + event.movementY
-    if (top <= 0) {
-      this.translateY = top
-    }
+    this.translateY = top
+    this.children.forEach(container => {
+      if (container instanceof ChartGroup) {
+        container.matrix.update({
+          pixelTime: this.DateLine.getPixelTime(),
+          startTime: this.DateLine.getViewStartTime(),
+          endTime: this.DateLine.getViewEndTime(),
+        })
+        container.matrix.matrixUpdate()
+        // console.log(container.matrix);
+      }
+    })
   }
 
   /**
@@ -101,7 +109,7 @@ export default class EventChart extends BaseContainer {
     const originalEvent = event.data.originalEvent
     if (originalEvent instanceof MouseEvent || originalEvent instanceof PointerEvent) {
       this.tipX = originalEvent.offsetX
-      this.tipY = originalEvent.offsetY - this.DateLine.clientHeight
+      this.tipY = originalEvent.offsetY - this.DateLine.getClientHeight()
       this.onPointmove(originalEvent)
     }
   }
@@ -150,22 +158,18 @@ export default class EventChart extends BaseContainer {
 
   draw() {
     this.drawTip()
-    // this.children.forEach(container => {
-    //   if (container instanceof ChartGroup) {
-    //     // 
-    //   }
-    // })
   }
 
   update(t) {
     // 計算自己的碰撞座標
-    this.y = this.DateLine.clientHeight
+    this.x = this.props.translateX
+    this.y = this.DateLine.getClientHeight()
     // 計算群組高度給予碰撞
-    let y = this.translateY
+    let groupY = this.translateY
     this.children.forEach(container => {
       if (container instanceof ChartGroup) {
-        container.y = y
-        y += container.getCharGroupHeight()
+        container.y = groupY
+        groupY += container.getCharGroupHeight()
       }
     })
   }

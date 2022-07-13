@@ -64,8 +64,6 @@ export default class RulerItem extends BaseContainer {
     /** @type {number} */
     this.tipRectWidth = 0
     /** @type {number} */
-    this.dashedLineLeft = 0
-    /** @type {number} */
     this.buttonSize = 16
     /** @type {number} */
     this.paddingTop = DateLine.y + 6
@@ -93,27 +91,12 @@ export default class RulerItem extends BaseContainer {
     this.dashedLine = new Graphics()
 
     /** 
-     * Plus Button
-     * @type {Graphics} 
-     */
-    this.plusButton = new Graphics()
-    // this.plusButton.interactive = true
-    // this.plusButton.on(EventType.MOUSEDOWN, (e) => this.onPlusMouseDown(e))
-    // this.plusButton.on(EventType.MOUSEUP, (e) => this.onPlusMouseUp(e))
-    /** 
-     * Drag Button
-     * @type {Graphics} 
-     */
-    this.dragButton = new Graphics()
-    // this.dragButton.interactive = true
-    // this.dragButton.on(EventType.MOUSEDOWN, (e) => this.onDragMouseDown(e))
-    // this.dragButton.on(EventType.MOUSEUP, (e) => this.onDragMouseUp(e))
-    /** 
      * Dash Button
      * @type {Graphics} 
      */
     this.dashButton = new Graphics()
     this.dashButton.interactive = true
+    this.dashButton.cacheAsBitmap = true
     this.dashButton.on(EventType.MOUSEDOWN, (e) => this.onDashMouseDown(e))
     this.dashButton.on(EventType.MOUSEUP, (e) => this.onDashMouseUp(e))
     /** 
@@ -127,13 +110,12 @@ export default class RulerItem extends BaseContainer {
       align: 'center'
     })
 
-    this.addChild(this.tipRect, this.dashedLine, this.plusButton, this.dragButton, this.dashButton, this.tipText)
+    this.addChild(this.tipRect, this.dashedLine, this.dashButton, this.tipText)
     this.create()
   }
 
   updateTipTime() {
-    this.dashedLineLeft = this.translateX
-    this.currentTime = this.props.baseTime - this.DateLine.basePixelTime * (this.DateLine.baseX - this.dashedLineLeft)
+    this.currentTime = this.DateLine.getViewStartTime() + this.translateX * this.DateLine.getPixelTime()
     this.tipText.text = dateFormat(this.currentTime, 'YYYY/MM/DD HH:mm:ss')
   }
 
@@ -144,13 +126,10 @@ export default class RulerItem extends BaseContainer {
   }
 
   update(t) {
-    this.updateTipTime()
-    // Tip Text
     this.tipRectHeight = this.tipPaddingY * 2 + this.tipText.height
     this.tipRectWidth = this.tipPaddingX * 2 + this.tipText.width
     this.tipText.x = this.translateX + this.tipPaddingX - this.tipRectWidth / 2
     this.tipText.y = this.tipPaddingY
-    this.dashedLineLeft = this.translateX
   }
 
   /**
@@ -158,7 +137,6 @@ export default class RulerItem extends BaseContainer {
    */
   onPointmove(event) {
     if (this.root.dragTriggedCount >= 5) {
-      // this.isPlusClick = false
       this.isDashClick = false
       this.root.onDragStart(event)
     }
@@ -174,12 +152,12 @@ export default class RulerItem extends BaseContainer {
         }
       }
     }
+    this.updateTipTime()
   }
 
   onMousedown(event) {
     event.stopPropagation()
     this.toTopRulerLine(this)
-    // this.isPlusClick = true
     this.isDashClick = true
     this.root.isRulerDrag = true
     this.root.target = this
@@ -188,22 +166,6 @@ export default class RulerItem extends BaseContainer {
   onMouseup(event) {
     this.root.onDragEnd(event)
   }
-
-  // onDragMouseDown(event) {}
-
-  // onDragMouseUp(event) {
-  //   this.root.onDragEnd(event)
-  // }
-
-  // onPlusMouseDown(event) {
-  //   this.isPlusClick = true
-  // }
-
-  // onPlusMouseUp(event) {
-  //   if (this.isPlusClick) {
-  //     this.appendRulerLine()
-  //   }
-  // }
 
   onDashMouseDown(event) {
     this.isDashClick = true
@@ -215,12 +177,12 @@ export default class RulerItem extends BaseContainer {
     }
   }
 
-  draw() {
+  drawTip() {
     const width = this.tipRectWidth
     const height = this.tipRectHeight
     const left = this.translateX - width / 2
     // Tip Rect
-    const isShow = this.root.isRulerDrag && !this.DateLine.scaleLeftList.includes(this.dashedLineLeft)
+    const isShow = this.root.isRulerDrag && !this.DateLine.textList.map(t => t.x).includes(this.translateX)
     if (isShow) {
       this.tipRect
         .beginFill(0xEEEEEE)
@@ -228,53 +190,44 @@ export default class RulerItem extends BaseContainer {
     } else {
       this.tipRect
         .beginFill(0x424242)
-        .drawRect(this.dashedLineLeft - 2, height, 4, this.DateLine.scaleHeight + this.paddingTop)
+        .drawRect(this.translateX - 2, height, 4, this.DateLine.scaleHeight + this.paddingTop)
     }
     this.tipText.alpha = Number(isShow)
+  }
+
+  drawDashed() {
     // Dashed Line
-    const lineLength = this.props.canvasHeight - height - this.paddingBottom - this.buttonSize * 1
+    const lineLength = this.props.canvasHeight - this.tipRectHeight - this.paddingBottom - this.buttonSize * 2
     const dashedLineBase = this.dashedLineIllusory + this.dashedLineSolid
     const dashedLineCount = Math.floor(lineLength / dashedLineBase)
+    this.dashedLine.x = this.translateX
     new Array(dashedLineCount).fill(null).forEach((_, index) => {
       this.dashedLine
-        // 
         .lineStyle(this.dashedLineWidth, 0x424242, 0.5)
-        .moveTo(this.dashedLineLeft, height + index * dashedLineBase)
-        .lineTo(this.dashedLineLeft, height + index * dashedLineBase + this.dashedLineSolid)
+        .moveTo(0, this.tipRectHeight + index * dashedLineBase)
+        .lineTo(0, this.tipRectHeight + index * dashedLineBase + this.dashedLineSolid)
     })
+  }
+
+  drawPlusButton() {
+    const lineLength = this.props.canvasHeight - this.tipRectHeight - this.paddingBottom - this.buttonSize * 2
     // Circle Plus Button
-    const circleX = this.dashedLineLeft
-    const circleY = this.paddingTop + height + lineLength
+    const circleY = this.paddingTop + this.tipRectHeight + lineLength
     const circleSize = this.buttonSize - this.dashedLineWidth * 2
     const plusIconSize = circleSize * 0.8
-    // const dotSize = this.buttonSize * 0.25
-    // this.dragButton
-    //   // 
-    //   .beginFill(0xffffff, 0.1)
-    //   .lineStyle(this.dashedLineWidth, 0x424242)
-    //   .drawCircle(circleX, circleY, circleSize)
-    //   .beginFill(0x424242)
-    //   .drawCircle(circleX + dotSize, circleY + dotSize, dotSize / 2)
-    //   .drawCircle(circleX + dotSize, circleY - dotSize, dotSize / 2)
-    //   .drawCircle(circleX - dotSize, circleY + dotSize, dotSize / 2)
-    //   .drawCircle(circleX - dotSize, circleY - dotSize, dotSize / 2)
-    // this.plusButton
-    //   .beginFill(0xffffff, 0.1)
-    //   .lineStyle(this.dashedLineWidth, 0x424242)
-    //   .drawCircle(circleX, circleY, circleSize)
-    //   .moveTo(circleX - plusIconSize / 2, circleY)
-    //   .lineTo(circleX + plusIconSize / 2, circleY)
-    //   .moveTo(circleX, circleY - plusIconSize / 2)
-    //   .lineTo(circleX, circleY + plusIconSize / 2)
-    // Circle Dash Button
-    const circleY2 = circleY
-    // const circleY2 = circleY + this.buttonSize * 1.5 + this.dashedLineWidth * 2
+    this.dashButton.x = this.translateX
+    this.dashButton.y = circleY + this.buttonSize
     this.dashButton
-      // 
       .beginFill(0xffffff, 0.1)
       .lineStyle(this.dashedLineWidth, 0x424242)
-      .drawCircle(circleX, circleY2, circleSize)
-      .moveTo(circleX - plusIconSize / 2, circleY2)
-      .lineTo(circleX + plusIconSize / 2, circleY2)
+      .drawCircle(0, 0, circleSize)
+      .moveTo(0 - plusIconSize / 2, 0)
+      .lineTo(0 + plusIconSize / 2, 0)
+  }
+
+  draw() {
+    this.drawTip()
+    this.drawDashed()
+    this.drawPlusButton()
   }
 }

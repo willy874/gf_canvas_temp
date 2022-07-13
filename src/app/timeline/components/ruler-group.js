@@ -34,6 +34,7 @@ export default class RulerGroup extends BaseContainer {
     this.plusButton = new Graphics()
     this.plusButton.interactive = true
     this.plusButton.buttonMode = true
+    this.plusButton.cacheAsBitmap = true
     this.plusButton.on(EventType.MOUSEDOWN, (e) => this.onPlusMouseDown(e))
     this.plusButton.on(EventType.MOUSEUP, (e) => this.onPlusMouseUp(e))
 
@@ -42,6 +43,12 @@ export default class RulerGroup extends BaseContainer {
   }
 
   draw() {
+    this.children.forEach(container => {
+      if (container instanceof RulerItem) {
+        container.dashedLine.x = container.translateX
+        container.dashedLine.y = container.tipRectHeight
+      }
+    })
     this.plusButtonSize = 16
     const plusIconSolid = 2
     const plusIconSize = this.plusButtonSize - plusIconSolid * 2
@@ -71,7 +78,6 @@ export default class RulerGroup extends BaseContainer {
   createRulerItem(args = {}) {
     return new RulerItem({
       ...this.getArguments(),
-      appendRulerLine: this.appendRulerLine.bind(this),
       removeRulerLine: this.removeRulerLine.bind(this),
       toTopRulerLine: this.toTopRulerLine.bind(this),
       ...args

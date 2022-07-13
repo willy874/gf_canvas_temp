@@ -61,7 +61,6 @@ export default class TimelineApplication {
   constructor(args = {}) {
     /** @type {TimelineApplicationOptions} */
     this.options = this.resolveOptions(args)
-
     this.app = new Application({
       width: this.options.canvasWidth,
       height: this.options.canvasHeight,
@@ -74,6 +73,7 @@ export default class TimelineApplication {
     })
     /** @type {DateLine} */
     this.dateLine = this.createDateLine()
+    this.options.translateX = this.options.canvasWidth - this.dateLine.getScaleWidth() * 2
     /** @type {RulerGroup} */
     this.rulerLine = this.createRulerGroup()
     /** @type {EventChart} */

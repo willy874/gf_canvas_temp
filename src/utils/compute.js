@@ -101,3 +101,28 @@ export function getUnitFormat(unit) {
       return 'YYYY/MM/DD HH:mm:ss'
   }
 }
+
+
+/**
+ * @template T
+ * @param {T[]} array 
+ * @param {number} index 
+ * @param {T} value 
+ * @returns {T[]}
+ */
+export function insertByIndex(array, index, value) {
+  if (array.length > 10000) {
+    let prev = value
+    let current = null
+    while (array[index]) {
+      current = array[index]
+      array[index] = prev
+      prev = current
+      index++
+    }
+    array[index] = prev
+  } else {
+    array.splice(index, 0, value)
+  }
+  return array
+}
