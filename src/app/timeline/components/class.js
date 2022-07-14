@@ -171,17 +171,21 @@ export class Matrix {
     /** @type {number} */
     this.lengthY = lengthY
     /** @type {T[][]} */
-    this.current = init ? this.createMatrix(lengthX, lengthY, init) : null
+    this.current = init ? this.createMatrix(init, lengthX, lengthY) : null
 
   }
 
   /**
    * @template {T} N
    * @param {N} init 
+   * @param {number} [lengthX] 
+   * @param {number} [lengthY] 
    * @returns {N[][]}
    */
-  createMatrix(lengthX, lengthY, init) {
-    return new Array(lengthY || this.lengthY).fill(null).map(a => new Array(lengthX || this.lengthX).fill(init))
+  createMatrix(init, lengthX, lengthY) {
+    const x = lengthX || this.lengthX
+    const y = lengthY || this.lengthY
+    return new Array(y).fill(null).map(a => new Array(x).fill(init))
   }
   
   setLength(x, y) {
@@ -264,25 +268,22 @@ export class TimeMatrix extends Matrix {
   }
 
   matrixUpdate() {
-    const lengthX = this.lengthX
-    const lengthY = this.isCollapse ? 0 : this.idMatrix.length
-    const matrix = this.createMatrix(lengthX, lengthY, 0)
+    const isCollapse = this.isCollapse
+    this.setLength(this.lengthX, isCollapse ? 1 : this.idMatrix.length)
+    const matrix = this.createMatrix(0)
     this.map.clear()
-    this.list.forEach((model, index) => {
+    for (let index = 0; index < this.list.length; index++) {
+      const model = this.list[index]
       const row = this.rowList[index]
       if (model.startTime < this.endTime && model.endTime > this.startTime) {
-        // console.log(`${model.startTime} < ${this.endTime}`, `${model.endTime} > ${this.startTime}`);
-        if (this.isCollapse) {
+        if (isCollapse) {
           this.createStackMatrix(model, matrix)
         } else {
           this.createExpandMatrix(model, matrix, row)
         }
       }
-    })
-    this.setLength(matrix[0].length, matrix.length)
+    }
     this.current = matrix
-    // console.log(this.map);
-    // console.log(this.current);
   }
 
   /**
@@ -295,6 +296,9 @@ export class TimeMatrix extends Matrix {
     let endColumn = Math.floor((model.endTime - this.startTime) / this.pixelTime)
     if (startColumn === endColumn) {
       endColumn += 1
+    }
+    if (!matrix[row]) {
+      throw new Error('Matrix create fail.')
     }
     for (let column = startColumn; column < endColumn; column++) {
       const value = matrix[row][column]
@@ -312,9 +316,6 @@ export class TimeMatrix extends Matrix {
    */
   createStackMatrix(model, matrix, row = 0) {
     let currentTime = 0
-    if (!matrix[row]) {
-      matrix[row] = new Array(this.lengthX).fill(0)
-    }
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
       const isInRange = currentTime > model.startTime && currentTime < model.endTime
@@ -327,6 +328,9 @@ export class TimeMatrix extends Matrix {
           continue
         }
         const models = this.map.get(`${column},${row}`)
+        if (!models) {
+          throw new Error('Models is not catch.')
+        }
         if (value === 1 || value === 2) {
           if (models.length && models.map(id => this.collection.get(id)).some(m => m.eventTypeId !== model.eventTypeId)) {
             matrix[row][column] = 3

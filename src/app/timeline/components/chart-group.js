@@ -76,7 +76,7 @@ export default class ChartGroup extends BaseContainer {
       pixelTime: this.DateLine.getPixelTime(),
       startTime: this.DateLine.getViewStartTime(),
       endTime: this.DateLine.getViewEndTime(),
-      isCollapse: false,
+      isCollapse: this.model.collapse,
     })
     // console.log('matrix', this.matrix);
     this.charItemList = this.model.data.map(m => this.getCharItem(m))
@@ -152,7 +152,7 @@ export default class ChartGroup extends BaseContainer {
    * @return {number}
    */
   getCharGroupHeight() {
-    return this.matrix.current.length * (this.chartHeight + this.chartPaddingY * 2) + this.paddingY * 2
+    return this.matrix.current.length * (this.chartHeight + this.chartPaddingY) * 2 + this.paddingY * 2
   }
 
   /**

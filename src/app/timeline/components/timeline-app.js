@@ -90,7 +90,7 @@ export default class TimelineApplication {
     canvas.addEventListener(EventType.WEBGLCONTEXTLOST, (e) => e.preventDefault());
     canvas.addEventListener(EventType.WEBGLCONTEXTRESTORED, (e) => window.location.reload());
 
-    fetchEventData().then(data => {
+    fetchEventData(true).then(data => {
       if (data) {
         this.options.types = data
         this.eventChart.init()
