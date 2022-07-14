@@ -44,7 +44,7 @@ export default class EventChart extends BaseContainer {
     this.tipY = 0
     /** @type {boolean} */
     this.isShowTip = false
-    /** @type {ITimeLimeChartModel} */
+    /** @type {ITimeLimeChartModel[]} */
     this.target = null
     /** @type {Text} */
     this.tipText = new Text('', {
@@ -54,7 +54,6 @@ export default class EventChart extends BaseContainer {
     })
 
     GlobalEvent.on(EventType.SCALEMOVE, (e) => this.onScalemove(e))
-    GlobalEvent.on(EventType.CANVASMOVE, (e) => this.onCanvasMove(e))
 
     /** @type {Graphics} */
     this.graphics = new Graphics()
@@ -63,24 +62,20 @@ export default class EventChart extends BaseContainer {
     this.create()
   }
 
-  /**
-   * @param {PointerEvent|MouseEvent} event 
-   */
-  onPointmove(event) {
-    let isCollision
-    this.children.forEach(container => {
-      if (container instanceof ChartGroup) {
-        container.coordinatesList.forEach(coordinate => {
-          if (coordinate.isCollision(event.clientX - container.x - container.paddingX, event.clientY - container.y - container.getClientTop())) {
-            this.target = this.collection.get(coordinate.eventId)
-            isCollision = true
-          }
-        })
-      }
+  init() {
+    const children = this.getCharGroup()
+    children.forEach(container => {
+      container.markGraphics.interactive = true
+      container.markGraphics.buttonMode = true
+      container.markGraphics.on(EventType.MOUSEOVER, (e) => {
+        this.target = []
+      })
+      container.markGraphics.on(EventType.MOUSEOUT, (e) => {
+        this.target = null
+      })
+      container.markGraphics.on(EventType.POINTERMOVE, (e) => this.onMarkMouseMove(e, container))
     })
-    if (!isCollision) {
-      this.target = null
-    }
+    this.refreshChildren(...children, this.tipGraphics, this.tipText)
   }
 
   /**
@@ -99,22 +94,31 @@ export default class EventChart extends BaseContainer {
           endTime: this.DateLine.getViewEndTime(),
         })
         container.matrix.matrixUpdate()
-        // console.log(container.matrix);
       }
     })
   }
 
   /**
    * @param {InteractionEvent} event 
+   * @param {ChartGroup} container 
    */
-   onCanvasMove(event) {
+  onMarkMouseMove(event, container) {
     const originalEvent = event.data.originalEvent
+    // console.log('x', this.x);
+    // console.log('y', this.y);
     if (originalEvent instanceof MouseEvent || originalEvent instanceof PointerEvent) {
-      this.tipX = originalEvent.offsetX
-      this.tipY = originalEvent.offsetY - this.DateLine.getClientHeight()
-      this.onPointmove(originalEvent)
+      this.tipX = event.data.global.x
+      this.tipY = event.data.global.y
+      if (this.target) {
+        // console.log('onMarkMouseMove', this.tipX, this.tipY);
+        const mark = container.markList.find(m => m.isCollision(this.tipX, this.tipY))
+        if (mark) {
+          this.target = mark.getModelList()
+        }
+      }
     }
   }
+
 
   getCharGroup() {
     return this.props.types.filter(m => m.data.length).map((_, index) => {
@@ -129,33 +133,34 @@ export default class EventChart extends BaseContainer {
     })
   }
 
-  init() {
-    const children = this.getCharGroup()
-    this.refreshChildren(...children, this.tipGraphics, this.tipText)
-  }
-
   drawTip() {
-    const tipAlpha = Number(this.target ? 1 : 0)
+    const tipAlpha = Number(this.target && this.target.length ? 1 : 0)
     const offsetX = 12
     const offsetY = 12
     const paddingX = 8
     const paddingY = 8
     this.tipText.alpha = tipAlpha
     if (tipAlpha) {
-      this.tipText.text = this.target.title
+      if (this.target.length === 1) {
+        this.tipText.text = this.target.find(p => p).title
+      } else {
+        this.tipText.text = `count: ${this.target.length}`
+      }
     }
     const width = this.tipText.width + paddingX * 2
     const height = this.tipText.height + paddingY * 2
     const tipX = this.tipX + width >= this.props.canvasWidth ? this.tipX - width : this.tipX
     const tipY = this.tipY + height >= this.props.canvasHeight ? this.tipY - height : this.tipY
     if (tipAlpha) {
-      this.tipText.x = tipX + offsetX + paddingX
-      this.tipText.y = tipY + offsetY + paddingY
+      this.tipText.x = tipX + offsetX + paddingX - this.x
+      this.tipText.y = tipY + offsetY + paddingY - this.y
+      this.tipGraphics.x = tipX + offsetX - this.x
+      this.tipGraphics.y = tipY + offsetY - this.y
     }
     this.tipGraphics
       .beginFill(0xEEEEEE, tipAlpha)
       .lineStyle(1, 0xBDBDBD, tipAlpha)
-      .drawRoundedRect(tipX + offsetX, tipY + offsetY, width, height, 8)
+      .drawRoundedRect(0, 0, width, height, 8)
   }
 
   draw() {

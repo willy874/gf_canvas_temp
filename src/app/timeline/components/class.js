@@ -2,148 +2,78 @@ import {
   Collection,
   // dateFormat,
   getEndPointByTrigonometric,
-  insertByIndex
+  insertByIndex,
+  isSet
 } from '@base/utils'
 
-export class ChartItem {
+export class TimeMark {
   constructor(args) {
     const {
-      props,
       color,
-      type,
-      model,
-      chartHeight,
-      chartPaddingY,
-      graphics
-    } = args;
-
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
-    this.props = props
-
-    // === Components ===
-    const {
-      DateLine,
-    } = props.getComponents()
-    /** @type {import('./dateline').default} */
-    this.DateLine = DateLine;
-    // /** @type {import('./ruler-group').default} */
-    // this.RulerLine = RulerLine;
-
-    // === Props Attribute ===
-    /** @type {number} */
-    this.color = color
-    /** @type {number} */
-    this.type = type
-    /** @type {ITimeLimeChartModel} */
-    this.model = model
-    /** @type {import('./dateline').default} */
-    this.DateLine = DateLine;
-    /** @type {Graphics} */
-    this.graphics = graphics;
-
-    // === Base Attribute ===
-    /** @type {number} */
-    this.left = 0
-    /** @type {number} */
-    this.top = 0
-    /** @type {number} */
-    this.width = 0
-    /** @type {number} */
-    this.height = 0
-    /** @type {number} */
-    this.chartHeight = chartHeight
-    /** @type {number} */
-    this.chartPaddingY = chartPaddingY
-    /** @type {Area[]} */
-    this.coordinates = []
-  }
-
-  // getChartLeft() {
-  //   const rangeTime = this.props.baseTime - this.model.startTime
-  //   const diff = Math.floor(rangeTime / this.DateLine.basePixelTime)
-  //   const left = this.DateLine.baseX - diff
-  //   return left
-  // }
-
-  // getChartTop() {
-  //   return this.matrixInfo.row * this.getChartHeigh()
-  // }
-
-  // getChartWidth() {
-  //   const rangeTime = this.model.endTime - this.model.startTime
-  //   const width = Math.floor(rangeTime / this.DateLine.basePixelTime)
-  //   return Math.max(width, this.chartHeight)
-  // }
-
-  // getChartHeigh() {
-  //   return this.chartHeight + this.chartPaddingY * 2
-  // }
-
-  update(position = {}) {
-    // const {
-    //   left,
-    //   top,
-    //   width,
-    //   height
-    // } = position
-    // this.left = left || this.getChartLeft()
-    // this.top = top || this.getChartTop()
-    // this.width = width || this.getChartWidth()
-    // this.height = height || this.getChartHeigh()
-  }
-
-  draw() {
-    this.drawChart()
-  }
-
-  drawChart() {
-    this.graphics
-      .beginFill(0, 0)
-      .lineStyle(0, 0)
-      .drawRect(this.left, this.top, this.width, this.height)
-      .beginFill(this.color)
-      .drawRect(this.left, this.chartPaddingY + this.top, this.width, this.chartHeight)
-  }
-}
-
-
-export class Coordinate {
-  constructor(args) {
-    const {
-      graphics,
-      color,
-      eventId,
+      chartClientHeight,
+      models,
       top,
-      left
+      left,
+      clientLeft,
+      clientTop,
+      graphics,
+      collection,
     } = args
 
+    // === Props Attribute ===
+    /** @type {(string|number)[]} */
+    this.models = models || []
     /** @type {number} */
     this.top = top
     /** @type {number} */
     this.left = left
     /** @type {number} */
+    this.clientLeft = clientLeft
+    /** @type {number} */
+    this.clientTop = clientTop
+    /** @type {number} */
     this.color = color
     /** @type {number} */
-    this.circleSize = 6
-    /** @type {string|number} */
-    this.eventId = eventId
+    this.chartClientHeight = chartClientHeight
+    /** @type {ICollection<ITimeLimeChartModel>} */
+    this.collection = collection
     /** @type {Graphics} */
     this.graphics = graphics
-    /** @type {number[]} */
-    this.collision = [0, 0, 0, 0]
+    // === Base Attribute ===
+    /** @type {number} */
+    this.circleSize = 6
   }
 
+  createCollisionMatrix() {
+    return new Array(this.circleSize * 3).fill(null).map(p => new Array(this.circleSize * 2))
+  }
+
+  /**
+   * @param {number} x 
+   * @param {number} y 
+   * @returns {boolean}
+   */
   isCollision(x, y) {
-    return this.circleSize + 2 >= Math.sqrt((this.left - x) ** 2 + (this.top - y + this.circleSize) ** 2)
+    const left = this.clientLeft
+    const top = this.clientTop - this.circleSize * 1.5
+    return this.circleSize + 2 >= Math.sqrt((left - x) ** 2 + (top - y) ** 2)
   }
 
-  drawCoordinateItem() {
+  /**
+   * @returns {ITimeLimeChartModel[]}
+   */
+  getModelList() {
+    return this.models.map((id) => this.collection.get(id))
+  }
+
+  draw() {
     const x = this.left
     const y = this.top
     const color = this.color
-    const point1 = getEndPointByTrigonometric(x, y, 115, -11)
-    const point2 = getEndPointByTrigonometric(x, y, 65, -11)
-    const point3 = getEndPointByTrigonometric(x, y, 90, -13)
+    const triangleSize = this.circleSize * 2
+    const point1 = getEndPointByTrigonometric(x, y, 115, 0 - triangleSize)
+    const point2 = getEndPointByTrigonometric(x, y, 65, 0 - triangleSize)
+    const point3 = getEndPointByTrigonometric(x, y, 90, 0 - triangleSize)
     this.graphics
       .beginFill(0x6c6c6c)
       .lineStyle(1, 0x6c6c6c)
@@ -159,7 +89,7 @@ export class Coordinate {
 /**
  * @template T
  */
-export class Matrix {
+export class MatrixCollection {
   /**
    * @param {number} lengthX 
    * @param {number} lengthY 
@@ -195,9 +125,14 @@ export class Matrix {
 }
 
 /**
- * @template {number} T
+ * @typedef {Object} MarkInfo
+ * @property {number} column
+ * @property {number} row
+ * @property {number} type
+ * @property {number} width
+ * @property {(string|number)[]} models
  */
-export class TimeMatrix extends Matrix {
+export class TimeLineMatrix extends MatrixCollection {
   constructor(args = {}) {
     const {
       collection,
@@ -250,71 +185,103 @@ export class TimeMatrix extends Matrix {
     this.filter = filter || null
     /**
      * @private
-     * @type {ITimeLimeChartModel[]}
-     */
-    this.list = []
-    /**
-     * @private
      * @type {number[]}
      */
     this.rowList = []
+    /**
+     * @type {MarkInfo[]}
+     */
+     this.marks = []
     this.matrixInit()
     this.matrixUpdate()
   }
 
   matrixInit() {
-    this.list = this.filter ? this.collection.all().filter(p => this.filter(p)) : this.collection.all()
-    this.rowList = this.list.map(p => this.getMatrixRow(String(p.id), this.idMatrix))
+    this.rowList = this.collection.all().map(p => this.getMatrixRow(String(p.id), this.idMatrix))
   }
 
   matrixUpdate() {
+    this.current = this.createDrawMatrix()
+    this.marks = this.createMarkList(this.current)
+  }
+
+  /**
+   * @param {number[][]} matrix
+   * @return {MarkInfo[]}
+   */
+  createMarkList(matrix) {
+    const marks = []
+    for (let row = 0; row < matrix.length; row++) {
+      const columns = matrix[row]
+      let prev = null
+      let current = null
+      let next = null
+      let level1 = 0
+      let level2 = 0
+      let level3 = 0
+      for (let column = 0; column < columns.length; column++) {
+        prev = columns[column - 1]
+        current = columns[column]
+        next = columns[column + 1]
+        const models = this.map.get(`${column},${row}`)
+        if (current >= 1) level1++
+        if (current >= 2) level2++
+        if (current >= 3) level3++
+        if (isSet(prev) && isSet(current) && prev < current) {
+          marks.push({ column, row, models, type: current, width: -1 })
+          continue
+        }
+        if (isSet(current) && isSet(next) && current > next) {
+          let width = null
+          if (current === 0) {
+            width = level1
+            level1 = 0
+          }
+          if (current === 2) {
+            width = level2
+            level2 = 0
+          }
+          if (current === 3) {
+            width = level3
+            level3 = 0
+          }
+          marks.push({ column, row, models, type: current, width })
+          continue
+        }
+      }
+    }
+    return marks
+  }
+
+  /**
+   * @return {number[][]}
+   */
+  createDrawMatrix() {
+    const list = this.collection.all()
     const isCollapse = this.isCollapse
     this.setLength(this.lengthX, isCollapse ? 1 : this.idMatrix.length)
     const matrix = this.createMatrix(0)
     this.map.clear()
-    for (let index = 0; index < this.list.length; index++) {
-      const model = this.list[index]
+    for (let index = 0; index < list.length; index++) {
+      const model = list[index]
       const row = this.rowList[index]
       if (model.startTime < this.endTime && model.endTime > this.startTime) {
         if (isCollapse) {
-          this.createStackMatrix(model, matrix)
+          this.writeStackMatrix(matrix, model)
         } else {
-          this.createExpandMatrix(model, matrix, row)
+          this.writeExpandMatrix(matrix, model, row)
         }
       }
     }
-    this.current = matrix
+    return matrix
   }
 
   /**
-   * @param {ITimeLimeChartModel} model 
    * @param {number[][]} matrix 
+   * @param {ITimeLimeChartModel} model 
    * @param {number} row 
    */
-  createExpandMatrix(model, matrix, row) {
-    const startColumn = Math.floor((model.startTime - this.startTime) / this.pixelTime)
-    let endColumn = Math.floor((model.endTime - this.startTime) / this.pixelTime)
-    if (startColumn === endColumn) {
-      endColumn += 1
-    }
-    if (!matrix[row]) {
-      throw new Error('Matrix create fail.')
-    }
-    for (let column = startColumn; column < endColumn; column++) {
-      const value = matrix[row][column]
-      if (value === 0) {
-        matrix[row][column] = 1
-        this.map.set(`${column},${row}`, [model.id])
-      }
-    }
-  }
-
-  /**
-   * @param {ITimeLimeChartModel} model 
-   * @param {number[][]} matrix 
-   * @param {number} row 
-   */
-  createStackMatrix(model, matrix, row = 0) {
+   writeStackMatrix(matrix, model, row = 0) {
     let currentTime = 0
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
@@ -341,6 +308,29 @@ export class TimeMatrix extends Matrix {
           models.push(model.id)
           continue
         }
+      }
+    }
+  }
+
+  /**
+   * @param {number[][]} matrix 
+   * @param {ITimeLimeChartModel} model 
+   * @param {number} row 
+   */
+  writeExpandMatrix(matrix, model, row) {
+    const startColumn = Math.floor((model.startTime - this.startTime) / this.pixelTime)
+    let endColumn = Math.floor((model.endTime - this.startTime) / this.pixelTime)
+    if (startColumn === endColumn) {
+      endColumn += 1
+    }
+    if (!matrix[row]) {
+      throw new Error('Matrix create fail.')
+    }
+    for (let column = startColumn; column < endColumn; column++) {
+      const value = matrix[row][column]
+      if (value === 0) {
+        matrix[row][column] = 1
+        this.map.set(`${column},${row}`, [model.id])
       }
     }
   }

@@ -9,14 +9,6 @@ import {
 } from '@base/utils'
 import BaseContainer from "./base-container"
 
-// class CanvasMoveEvent extends CustomEvent {
-//   /**
-//    * @param {InteractionEvent} event 
-//    */
-//   constructor(event) {
-//     super(EventType.CANVASMOVE, { detail: event })
-//   }
-// }
 
 export default class RootContainer extends BaseContainer {
   /**
