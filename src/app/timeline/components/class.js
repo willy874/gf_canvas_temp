@@ -17,11 +17,14 @@ export class TimeMark {
       clientTop,
       graphics,
       collection,
+      width,
     } = args
 
     // === Props Attribute ===
     /** @type {(string|number)[]} */
     this.models = models || []
+    /** @type {number} */
+    this.width = width
     /** @type {number} */
     this.top = top
     /** @type {number} */
@@ -65,22 +68,23 @@ export class TimeMark {
   }
 
   draw() {
-    const x = this.left
-    const y = this.top
-    const color = this.color
-    const triangleSize = this.circleSize * 2
-    const point1 = getEndPointByTrigonometric(x, y, 115, 0 - triangleSize)
-    const point2 = getEndPointByTrigonometric(x, y, 65, 0 - triangleSize)
-    const point3 = getEndPointByTrigonometric(x, y, 90, 0 - triangleSize)
-    this.graphics
-      .beginFill(0x6c6c6c)
-      .lineStyle(1, 0x6c6c6c)
-      .drawPolygon([...[x, y], ...point1, ...point2])
-      .drawCircle(...point3, this.circleSize)
-      .beginFill(color)
-      .lineStyle(1, color)
-      .drawCircle(...point3, this.circleSize / 2)
-    return this
+    if (this.width >= 3) {
+      const x = this.left
+      const y = this.top
+      const color = this.color
+      const triangleSize = this.circleSize * 2
+      const point1 = getEndPointByTrigonometric(x, y, 115, 0 - triangleSize)
+      const point2 = getEndPointByTrigonometric(x, y, 65, 0 - triangleSize)
+      const point3 = getEndPointByTrigonometric(x, y, 90, 0 - triangleSize)
+      this.graphics
+        .beginFill(0x6c6c6c)
+        .lineStyle(1, 0x6c6c6c)
+        .drawPolygon([...[x, y], ...point1, ...point2])
+        .drawCircle(...point3, this.circleSize)
+        .beginFill(color)
+        .lineStyle(1, color)
+        .drawCircle(...point3, this.circleSize / 2)
+    }
   }
 }
 
@@ -284,7 +288,7 @@ export class TimeLineMatrix extends MatrixCollection {
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
       const isInRange = currentTime > model.startTime && currentTime < model.endTime
-      const isPoint = currentTime > model.startTime + this.pixelTime && currentTime <  model.endTime + this.pixelTime
+      const isPoint = currentTime > model.startTime && currentTime < model.startTime + this.pixelTime
       if (isInRange || isPoint) {
         const value = matrix[row][column]
         if (value === 0) {
