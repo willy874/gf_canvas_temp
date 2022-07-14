@@ -68,23 +68,21 @@ export class TimeMark {
   }
 
   draw() {
-    if (this.width >= 3) {
-      const x = this.left
-      const y = this.top
-      const color = this.color
-      const triangleSize = this.circleSize * 2
-      const point1 = getEndPointByTrigonometric(x, y, 115, 0 - triangleSize)
-      const point2 = getEndPointByTrigonometric(x, y, 65, 0 - triangleSize)
-      const point3 = getEndPointByTrigonometric(x, y, 90, 0 - triangleSize)
-      this.graphics
-        .beginFill(0x6c6c6c)
-        .lineStyle(1, 0x6c6c6c)
-        .drawPolygon([...[x, y], ...point1, ...point2])
-        .drawCircle(...point3, this.circleSize)
-        .beginFill(color)
-        .lineStyle(1, color)
-        .drawCircle(...point3, this.circleSize / 2)
-    }
+    const x = this.left
+    const y = this.top
+    const color = this.color
+    const triangleSize = this.circleSize * 2
+    const point1 = getEndPointByTrigonometric(x, y, 115, 0 - triangleSize)
+    const point2 = getEndPointByTrigonometric(x, y, 65, 0 - triangleSize)
+    const point3 = getEndPointByTrigonometric(x, y, 90, 0 - triangleSize)
+    this.graphics
+      .beginFill(0x6c6c6c)
+      .lineStyle(1, 0x6c6c6c)
+      .drawPolygon([...[x, y], ...point1, ...point2])
+      .drawCircle(...point3, this.circleSize)
+      .beginFill(color)
+      .lineStyle(1, color)
+      .drawCircle(...point3, this.circleSize / 2)
   }
 }
 
@@ -119,7 +117,7 @@ export class MatrixCollection {
     const y = lengthY || this.lengthY
     return new Array(y).fill(null).map(a => new Array(x).fill(init))
   }
-  
+
   setLength(x, y) {
     this.lengthX = x
     this.lengthY = y
@@ -193,7 +191,7 @@ export class TimeLineMatrix extends MatrixCollection {
     /**
      * @type {MarkInfo[]}
      */
-     this.marks = []
+    this.marks = []
     this.matrixInit()
     this.matrixUpdate()
   }
@@ -230,7 +228,14 @@ export class TimeLineMatrix extends MatrixCollection {
         if (current >= 2) level2++
         if (current >= 3) level3++
         if (isSet(prev) && isSet(current) && prev < current) {
-          marks.push({ column, row, models, type: current, width: -1 })
+          marks.push({
+            column,
+            row,
+            models,
+            type: current,
+            width: -1,
+            isDraw: true
+          })
           continue
         }
         if (isSet(current) && isSet(next) && current > next) {
@@ -247,7 +252,14 @@ export class TimeLineMatrix extends MatrixCollection {
             width = level3
             level3 = 0
           }
-          marks.push({ column, row, models, type: current, width })
+          marks.push({
+            column,
+            row,
+            models,
+            type: current,
+            width,
+            isDraw: width >= 3
+          })
           continue
         }
       }
@@ -283,7 +295,7 @@ export class TimeLineMatrix extends MatrixCollection {
    * @param {ITimeLimeChartModel} model 
    * @param {number} row 
    */
-   writeStackMatrix(matrix, model, row = 0) {
+  writeStackMatrix(matrix, model, row = 0) {
     let currentTime = 0
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
