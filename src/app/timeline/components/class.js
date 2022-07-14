@@ -10,7 +10,6 @@ export class TimeMark {
   constructor(args) {
     const {
       color,
-      chartClientHeight,
       models,
       top,
       left,
@@ -34,7 +33,6 @@ export class TimeMark {
     /** @type {number} */
     this.color = color
     /** @type {number} */
-    this.chartClientHeight = chartClientHeight
     /** @type {ICollection<ITimeLimeChartModel>} */
     this.collection = collection
     /** @type {Graphics} */
@@ -286,7 +284,7 @@ export class TimeLineMatrix extends MatrixCollection {
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
       const isInRange = currentTime > model.startTime && currentTime < model.endTime
-      const isPoint = currentTime > model.startTime + this.pixelTime && currentTime <  model.startTime + this.pixelTime
+      const isPoint = currentTime > model.startTime + this.pixelTime && currentTime <  model.endTime + this.pixelTime
       if (isInRange || isPoint) {
         const value = matrix[row][column]
         if (value === 0) {
