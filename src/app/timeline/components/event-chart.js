@@ -88,7 +88,9 @@ export default class EventChart extends BaseContainer {
    */
   onScalemove(event) {
     const top = this.translateY + event.movementY
-    this.translateY = top
+    if (top <= this.DateLine.paddingBottom / 2) {
+      this.translateY = top
+    }
     this.children.forEach(container => {
       if (container instanceof ChartGroup) {
         container.matrix.update({

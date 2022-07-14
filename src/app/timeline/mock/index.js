@@ -51,6 +51,7 @@ function handleEventData(args) {
             // ...attack,
             // ...event,
             id: attack.event_id,
+            eventTypeId: type.id,
             title: attack.event_id,
             startTime: new Date(event.inScrubbingCenterTime).valueOf(),
             endTime: event.outScrubbingCenterTime ? new Date(event.outScrubbingCenterTime).valueOf() : (new Date(event.inScrubbingCenterTime).valueOf() + 1),
@@ -65,6 +66,7 @@ function handleEventData(args) {
           return {
             // ...maintenance,
             id: maintenance.event_id,
+            eventTypeId: type.id,
             title: maintenance.event_id,
             startTime: new Date(maintenance.scheduled_start_time).valueOf(),
             endTime: new Date(maintenance.scheduled_end_time).valueOf()

@@ -260,7 +260,7 @@ export class TimeMatrix extends Matrix {
 
   matrixInit() {
     this.list = this.filter ? this.collection.all().filter(p => this.filter(p)) : this.collection.all()
-    this.rowList = this.getMatrixRowList(this.list.map(p => String(p.id)), this.idMatrix)
+    this.rowList = this.list.map(p => this.getMatrixRow(String(p.id), this.idMatrix))
   }
 
   matrixUpdate() {
@@ -269,24 +269,13 @@ export class TimeMatrix extends Matrix {
     const matrix = this.createMatrix(lengthX, lengthY, 0)
     this.map.clear()
     this.list.forEach((model, index) => {
-      // console.log('model', model);
+      const row = this.rowList[index]
       if (model.startTime < this.endTime && model.endTime > this.startTime) {
         // console.log(`${model.startTime} < ${this.endTime}`, `${model.endTime} > ${this.startTime}`);
         if (this.isCollapse) {
           this.createStackMatrix(model, matrix)
         } else {
-          // console.log(matrix);
-          const row = this.rowList[index]
-          const startColumn = Math.floor((model.startTime - this.startTime) / this.pixelTime)
-          const endColumn = Math.floor((model.endTime - this.startTime) / this.pixelTime)
-          // console.log(row, startColumn, endColumn);
-          for (let column = startColumn; column < endColumn; column++) {
-            const value = matrix[row][column]
-            if (value === 0) {
-              matrix[row][column] = 1
-              this.map.set(`${column},${row}`, [model.id])
-            }
-          }
+          this.createExpandMatrix(model, matrix, row)
         }
       }
     })
@@ -301,6 +290,26 @@ export class TimeMatrix extends Matrix {
    * @param {number[][]} matrix 
    * @param {number} row 
    */
+  createExpandMatrix(model, matrix, row) {
+    const startColumn = Math.floor((model.startTime - this.startTime) / this.pixelTime)
+    let endColumn = Math.floor((model.endTime - this.startTime) / this.pixelTime)
+    if (startColumn === endColumn) {
+      endColumn += 1
+    }
+    for (let column = startColumn; column < endColumn; column++) {
+      const value = matrix[row][column]
+      if (value === 0) {
+        matrix[row][column] = 1
+        this.map.set(`${column},${row}`, [model.id])
+      }
+    }
+  }
+
+  /**
+   * @param {ITimeLimeChartModel} model 
+   * @param {number[][]} matrix 
+   * @param {number} row 
+   */
   createStackMatrix(model, matrix, row = 0) {
     let currentTime = 0
     if (!matrix[row]) {
@@ -308,8 +317,9 @@ export class TimeMatrix extends Matrix {
     }
     for (let column = 0; column < matrix[row].length; column++) {
       currentTime = this.startTime + column * this.pixelTime
-      if (currentTime > model.startTime && currentTime < model.endTime) {
-        // console.log('currentTime', dateFormat(currentTime));
+      const isInRange = currentTime > model.startTime && currentTime < model.endTime
+      const isPoint = currentTime > model.startTime + this.pixelTime && currentTime <  model.startTime + this.pixelTime
+      if (isInRange || isPoint) {
         const value = matrix[row][column]
         if (value === 0) {
           matrix[row][column] = 1
@@ -317,9 +327,6 @@ export class TimeMatrix extends Matrix {
           continue
         }
         const models = this.map.get(`${column},${row}`)
-        if (!models) {
-          return
-        }
         if (value === 1 || value === 2) {
           if (models.length && models.map(id => this.collection.get(id)).some(m => m.eventTypeId !== model.eventTypeId)) {
             matrix[row][column] = 3
@@ -373,7 +380,7 @@ export class TimeMatrix extends Matrix {
   /**
    * @param {string[]} matrix 
    * @param {string} value 
-   * @returns {number}  當成功插入回傳 index，當找不到插入節點回傳 -1
+   * @returns {boolean}
    */
   addMatrix(matrix, value) {
     let insertIndex = -1
@@ -397,34 +404,31 @@ export class TimeMatrix extends Matrix {
     }
     if (insertIndex >= 0) {
       insertByIndex(matrix, insertIndex, value)
-      return insertIndex
     }
-    return insertIndex
+    return Boolean(insertIndex >= 0)
   }
 
   /**
-   * @param {string[]} list
+   * @param {string} value
    * @param {string[][]} matrix
-   * @returns {number[]}
+   * @returns {number}
    */
-  getMatrixRowList(list, matrix) {
-    return list.map(value => {
-      let row = 0
-      let matrixRow
-      while (true) {
-        matrixRow = matrix[row]
-        if (matrixRow) {
-          if (this.addMatrix(matrixRow, value) >= 0) {
-            break
-          }
-        } else {
-          matrix[row] = [value]
+  getMatrixRow(value, matrix) {
+    let row = 0
+    let matrixRow
+    while (true) {
+      matrixRow = matrix[row]
+      if (matrixRow) {
+        if (this.addMatrix(matrixRow, value)) {
           break
         }
-        row++
+      } else {
+        matrix[row] = [value]
+        break
       }
-      return row
-    })
+      row++
+    }
+    return row
   }
 
   /**

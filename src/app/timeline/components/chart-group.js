@@ -174,7 +174,7 @@ export default class ChartGroup extends BaseContainer {
    * @return {boolean}
    */
   isShowY(top, height) {
-    const isTopLimit = top >= 0
+    const isTopLimit = top >= 0 - this.DateLine.paddingBottom / 2
     const isBottomLimit = top + height <= this.props.canvasHeight - this.getClientTop() - this.RulerLine.plusButtonSize * 3
     return isTopLimit && isBottomLimit
   }
@@ -189,11 +189,6 @@ export default class ChartGroup extends BaseContainer {
   }
 
   drawChartItem() {
-    // this.charItemList.forEach(item => {
-    //   if (this.isShowX(this.x + item.left, item.width) && this.isShowY(this.y + item.top, item.height)) {
-    //     item.draw()
-    //   }
-    // })
     const color = this.getColor(this.sort)
     const chartClientHeight = this.chartHeight * 2 + this.chartPaddingY * 2
     this.matrix.current.forEach((columns, row) => {
@@ -202,8 +197,8 @@ export default class ChartGroup extends BaseContainer {
         if (this.isShowY(rowY + this.y, chartClientHeight)) {
           if (type) {
             this.chartGraphics
-              .beginFill(color, 0.1)
-              // .beginFill(0, 0)
+              // .beginFill(color, 0.1)
+              .beginFill(0, 0)
               .lineStyle(0, 0, 0)
               .drawRect(column - this.props.translateX, rowY, 2, chartClientHeight)
           }
@@ -230,7 +225,7 @@ export default class ChartGroup extends BaseContainer {
   drawDivider() {
     const left = this.paddingX - this.props.translateX
     const top = 0 - this.paddingY
-    if (this.sort && this.isShowY(this.y, 1)) {
+    if (this.sort && this.isShowY(this.y - this.DateLine.paddingBottom / 2, 1)) {
       this.chartGraphics.lineStyle(1, 0xeeeeee)
         .moveTo(left, top)
         .lineTo(left + this.props.canvasWidth - this.paddingX * 2, top)
