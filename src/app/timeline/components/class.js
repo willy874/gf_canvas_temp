@@ -1,6 +1,5 @@
 import {
   Collection,
-  // dateFormat,
   getEndPointByTrigonometric,
   insertByIndex,
   isSet
@@ -57,7 +56,7 @@ export class TimeMark {
   isCollision(x, y) {
     const left = this.clientLeft
     const top = this.clientTop - this.circleSize * 1.5
-    return this.circleSize + 2 >= Math.sqrt((left - x) ** 2 + (top - y) ** 2)
+    return this.circleSize + 1 >= Math.sqrt((left - x) ** 2 + (top - y) ** 2)
   }
 
   /**
@@ -102,7 +101,6 @@ export class MatrixCollection {
     this.lengthY = lengthY
     /** @type {T[][]} */
     this.current = init ? this.createMatrix(init, lengthX, lengthY) : null
-
   }
 
   /**
@@ -192,10 +190,10 @@ export class TimeLineMatrix extends MatrixCollection {
      * @type {MarkInfo[]}
      */
     this.marks = []
-    console.log('Matrix Init');
-    console.time()
+    // console.log('Matrix Init');
+    // console.time()
     this.matrixInit()
-    console.timeEnd()
+    // console.timeEnd()
     this.matrixUpdate()
   }
 
@@ -204,15 +202,15 @@ export class TimeLineMatrix extends MatrixCollection {
   }
 
   matrixUpdate() {
-    console.log('Matrix Update');
-    console.log('Update Draw Matrix');
-    console.time()
+    // console.log('Matrix Update');
+    // console.log('Update Draw Matrix');
+    // console.time()
     this.current = this.createDrawMatrix()
-    console.timeEnd()
-    console.log('Update Mark List');
-    console.time()
+    // console.timeEnd()
+    // console.log('Update Mark List');
+    // console.time()
     this.marks = this.createMarkList(this.current)
-    console.timeEnd()
+    // console.timeEnd()
   }
 
   /**

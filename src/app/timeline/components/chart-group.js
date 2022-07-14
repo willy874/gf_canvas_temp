@@ -79,15 +79,15 @@ export default class ChartGroup extends BaseContainer {
       isCollapse: this.model.collapse,
     })
     this.markList = this.createTimeMarkList()
-    console.log('drawChartItem')
-    console.time()
-    this.drawChartItem()
-    console.timeEnd()
-    console.log('drawMarkList')
-    console.time()
-    this.drawMarkList()
-    console.timeEnd()
-    this.drawDivider()
+    // console.log('drawChartItem')
+    // console.time()
+    // this.drawChartItem()
+    // console.timeEnd()
+    // console.log('drawMarkList')
+    // console.time()
+    // this.drawMarkList()
+    // console.timeEnd()
+    // this.drawDivider()
 
     this.refreshChildren(this.chartGraphics, this.markGraphics)
   }
@@ -148,7 +148,7 @@ export default class ChartGroup extends BaseContainer {
         left,
         top: top + this.getChartClientHeight() / 2,
         clientLeft: this.x + data.column,
-        clientTop: this.y + this.getChartClientHeight() / 2 + this.DateLine.getClientHeight(),
+        clientTop: this.y + this.getChartClientHeight() / 2 + this.DateLine.getClientHeight() + top - this.chartPaddingY,
         props: this.props,
         color: this.getColor(this.sort),
         graphics: this.markGraphics,

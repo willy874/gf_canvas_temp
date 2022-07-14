@@ -111,9 +111,9 @@ export default class EventChart extends BaseContainer {
       this.tipY = event.data.global.y
       if (this.target) {
         // console.log('onMarkMouseMove', this.tipX, this.tipY);
-        const mark = container.markList.find(m => m.isCollision(this.tipX, this.tipY))
-        if (mark) {
-          this.target = mark.getModelList()
+        const marks = container.markList.filter(m => m.isCollision(this.tipX, this.tipY))
+        if (marks.length) {
+          this.target = marks.map(p => p.getModelList()).flat()
         }
       }
     }
@@ -149,8 +149,8 @@ export default class EventChart extends BaseContainer {
     }
     const width = this.tipText.width + paddingX * 2
     const height = this.tipText.height + paddingY * 2
-    const tipX = this.tipX + width >= this.props.canvasWidth ? this.tipX - width : this.tipX
-    const tipY = this.tipY + height >= this.props.canvasHeight ? this.tipY - height : this.tipY
+    const tipX = this.tipX + width + offsetX * 2 >= this.props.canvasWidth ? this.tipX - width : this.tipX
+    const tipY = this.tipY + height + offsetY * 2 >= this.props.canvasHeight ? this.tipY - height : this.tipY
     if (tipAlpha) {
       this.tipText.x = tipX + offsetX + paddingX - this.x
       this.tipText.y = tipY + offsetY + paddingY - this.y
