@@ -92,6 +92,7 @@ export default class TimelineApplication {
 
     fetchEventData(true).then(data => {
       if (data) {
+        console.clear()
         this.options.types = data
         this.eventChart.init()
         // data.forEach(typeModel => {

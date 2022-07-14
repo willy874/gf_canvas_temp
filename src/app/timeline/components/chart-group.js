@@ -79,11 +79,16 @@ export default class ChartGroup extends BaseContainer {
       isCollapse: this.model.collapse,
     })
     this.markList = this.createTimeMarkList()
+    console.log('drawChartItem')
+    console.time()
+    this.drawChartItem()
+    console.timeEnd()
+    console.log('drawMarkList')
+    console.time()
+    this.drawMarkList()
+    console.timeEnd()
+    this.drawDivider()
 
-    this.markList.forEach(mark => {
-      // console.log('X', this.x + this.props.translateX + mark.left);
-      // console.log('Y', this.y + this.getClientTop());
-    })
     this.refreshChildren(this.chartGraphics, this.markGraphics)
   }
 
@@ -161,35 +166,41 @@ export default class ChartGroup extends BaseContainer {
 
   drawChartItem() {
     const color = this.getColor(this.sort)
-    this.matrix.current.forEach((columns, row) => {
-      const rowY = this.getPointY(row)
-      columns.forEach((type, column) => {
-        if (this.isShowY(rowY, this.getChartClientHeight())) {
+    const chartClientHeight = this.getChartClientHeight()
+    for (let row = 0; row < this.matrix.current.length; row++) {
+      const columns = this.matrix.current[row]
+      const pointY = this.getPointY(row)
+      const rowY = pointY + this.chartPaddingY
+      for (let column = 0; column < columns.length; column++) {
+        const type = columns[column]
+        if (this.isShowY(pointY, chartClientHeight)) {
           const columnX = this.getPointX(column)
           if (type) {
             this.chartGraphics
               .beginFill(0, 0)
               .lineStyle(0, 0, 0)
-              .drawRect(columnX, rowY, 2, this.getChartClientHeight())
+              .drawRect(columnX, pointY, 2, chartClientHeight)
           }
-          if (type === 1) {
+          switch (type) {
+            case 1:
             this.chartGraphics
               .beginFill(color)
-              .drawRect(columnX, rowY + this.chartPaddingY + this.chartHeight / 2, 2, this.chartHeight)
-          }
-          if (type === 2) {
+              .drawRect(columnX, rowY + this.chartHeight / 2, 2, this.chartHeight)
+              break;
+            case 2:
             this.chartGraphics
               .beginFill(color)
-              .drawRect(columnX, rowY + this.chartPaddingY, 1, this.chartHeight * 2)
-          }
-          if (type === 3) {
+              .drawRect(columnX, rowY, 1, this.chartHeight * 2)
+              break;
+            case 3:
             this.chartGraphics
               .beginFill(0xBBBBBB)
-              .drawRect(columnX, rowY + this.chartPaddingY, 1, this.chartHeight * 2)
+              .drawRect(columnX, rowY, 1, this.chartHeight * 2)
+              break;
           }
         }
-      })
-    })
+      }
+    }
   }
 
   drawDivider() {

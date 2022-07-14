@@ -192,7 +192,10 @@ export class TimeLineMatrix extends MatrixCollection {
      * @type {MarkInfo[]}
      */
     this.marks = []
+    console.log('Matrix Init');
+    console.time()
     this.matrixInit()
+    console.timeEnd()
     this.matrixUpdate()
   }
 
@@ -201,8 +204,15 @@ export class TimeLineMatrix extends MatrixCollection {
   }
 
   matrixUpdate() {
+    console.log('Matrix Update');
+    console.log('Update Draw Matrix');
+    console.time()
     this.current = this.createDrawMatrix()
+    console.timeEnd()
+    console.log('Update Mark List');
+    console.time()
     this.marks = this.createMarkList(this.current)
+    console.timeEnd()
   }
 
   /**
@@ -223,11 +233,14 @@ export class TimeLineMatrix extends MatrixCollection {
         prev = columns[column - 1]
         current = columns[column]
         next = columns[column + 1]
-        const models = this.map.get(`${column},${row}`)
         if (current >= 1) level1++
         if (current >= 2) level2++
         if (current >= 3) level3++
+        if (current === 0  && next === 0 && prev === 0) {
+          continue
+        }
         if (isSet(prev) && isSet(current) && prev < current) {
+          const models = this.map.get(`${column},${row}`)
           marks.push({
             column,
             row,
@@ -239,6 +252,7 @@ export class TimeLineMatrix extends MatrixCollection {
           continue
         }
         if (isSet(current) && isSet(next) && current > next) {
+          const models = this.map.get(`${column},${row}`)
           let width = null
           if (current === 0) {
             width = level1
@@ -252,14 +266,14 @@ export class TimeLineMatrix extends MatrixCollection {
             width = level3
             level3 = 0
           }
-          marks.push({
+          marks[marks.length] = {
             column,
             row,
             models,
             type: current,
             width,
             isDraw: width >= 3
-          })
+          }
           continue
         }
       }
