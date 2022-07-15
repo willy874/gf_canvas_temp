@@ -14,6 +14,7 @@ import BaseContainer from '@base/components/base-container'
 import DynamicProperties from '@base/components/dynamic-properties'
 import TimeText from './time-text'
 
+// TODO: 文字過長要清除
 
 export default class DateLine extends BaseContainer {
   constructor(args) {

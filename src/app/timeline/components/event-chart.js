@@ -149,13 +149,21 @@ export default class EventChart extends BaseContainer {
     }
     const width = this.tipText.width + paddingX * 2
     const height = this.tipText.height + paddingY * 2
-    const tipX = this.tipX + width + offsetX * 2 >= this.props.canvasWidth ? this.tipX - width : this.tipX
-    const tipY = this.tipY + height + offsetY * 2 >= this.props.canvasHeight ? this.tipY - height : this.tipY
     if (tipAlpha) {
-      this.tipText.x = tipX + offsetX + paddingX - this.x
-      this.tipText.y = tipY + offsetY + paddingY - this.y
-      this.tipGraphics.x = tipX + offsetX - this.x
-      this.tipGraphics.y = tipY + offsetY - this.y
+      if (this.tipX + width + offsetX * 2 >= this.props.canvasWidth) {
+        this.tipText.x = this.tipX - width - offsetX - this.x + paddingX
+        this.tipGraphics.x = this.tipX - width - offsetX - this.x 
+      } else {
+        this.tipText.x = this.tipX + offsetX - this.x + paddingX
+        this.tipGraphics.x = this.tipX + offsetX - this.x
+      }
+      if (this.tipY + height + offsetY * 2 >= this.props.canvasHeight) {
+        this.tipText.y = this.tipY - height - offsetY - this.y + paddingY
+        this.tipGraphics.y = this.tipY - height - offsetY - this.y
+      } else {
+        this.tipText.y = this.tipY + offsetY - this.y + paddingY
+        this.tipGraphics.y = this.tipY + offsetY - this.y
+      }
     }
     this.tipGraphics
       .beginFill(0xEEEEEE, tipAlpha)
