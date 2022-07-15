@@ -59,6 +59,7 @@ import {
  */
 export default class TimelineApplication {
   constructor(args = {}) {
+    console.time()
     /** @type {TimelineApplicationOptions} */
     this.options = this.resolveOptions(args)
     this.app = new Application({
@@ -90,11 +91,14 @@ export default class TimelineApplication {
     canvas.addEventListener(EventType.WEBGLCONTEXTLOST, (e) => e.preventDefault());
     canvas.addEventListener(EventType.WEBGLCONTEXTRESTORED, (e) => window.location.reload());
 
+    console.timeEnd()
+    console.time()
     fetchEventData(true).then(data => {
       if (data) {
-        console.clear()
+        // console.clear()
         this.options.types = data
         this.eventChart.init()
+        console.timeEnd()
         // data.forEach(typeModel => {
         //   const map = {};
         //   typeModel.data.forEach(p => {
