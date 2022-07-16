@@ -20,7 +20,7 @@ export default class EventChart extends BaseContainer {
       props,
     } = args;
 
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    /** @type {TimelineApplicationOptions} */
     this.props = props
 
     // === Components ===
@@ -63,7 +63,10 @@ export default class EventChart extends BaseContainer {
   }
 
   init() {
-    const children = this.getCharGroup()
+    this.props.types.forEach(model => {
+      model.data.forEach(m => this.collection.set(m.id, m))
+    })
+    const children = this.props.isAllCollapse ? [this.getCharGroup(this.collection)] : this.getCharGroupList()
     children.forEach(container => {
       container.markGraphics.interactive = true
       container.markGraphics.buttonMode = true
@@ -74,6 +77,7 @@ export default class EventChart extends BaseContainer {
         this.target = null
       })
       container.markGraphics.on(EventType.POINTERMOVE, (e) => this.onMarkMouseMove(e, container))
+      container.markGraphics.on(EventType.CLICK, (e) => this.onMarkClick(e, container))
     })
     this.refreshChildren(...children, this.tipGraphics, this.tipText)
   }
@@ -86,7 +90,7 @@ export default class EventChart extends BaseContainer {
     if (top <= this.DateLine.paddingBottom / 2) {
       this.translateY = top
     }
-    this.children.forEach(container => {
+    this.callChartGroup((container) => {
       if (container instanceof ChartGroup) {
         container.matrix.update({
           pixelTime: this.DateLine.getPixelTime(),
@@ -102,15 +106,12 @@ export default class EventChart extends BaseContainer {
    * @param {InteractionEvent} event 
    * @param {ChartGroup} container 
    */
-  onMarkMouseMove(event, container) {
+  targetUpdate(event, container) {
     const originalEvent = event.data.originalEvent
-    // console.log('x', this.x);
-    // console.log('y', this.y);
     if (originalEvent instanceof MouseEvent || originalEvent instanceof PointerEvent) {
       this.tipX = event.data.global.x
       this.tipY = event.data.global.y
       if (this.target) {
-        // console.log('onMarkMouseMove', this.tipX, this.tipY);
         const marks = container.markList.filter(m => m.isCollision(this.tipX, this.tipY))
         if (marks.length) {
           this.target = marks.map(p => p.getModelList()).flat()
@@ -119,17 +120,59 @@ export default class EventChart extends BaseContainer {
     }
   }
 
+  /**
+   * @param {InteractionEvent} event 
+   * @param {ChartGroup} container 
+   */
+  onMarkMouseMove(event, container) {
+    this.targetUpdate(event, container)
+  }
 
-  getCharGroup() {
-    return this.props.types.filter(m => m.data.length).map((_, index) => {
-      return new ChartGroup({
-        ...this.getArguments(),
-        sort: index,
-        DateLine: this.DateLine,
-        RulerLine: this.RulerLine,
-        collection: this.collection,
-        graphics: this.graphics
+  /**
+   * @param {InteractionEvent} event 
+   * @param {ChartGroup} container 
+   */
+  onMarkClick(event, container) {
+    this.targetUpdate(event, container)
+    this.props.onClickMark({
+      event,
+      models: this.target
+    })
+  }
+
+  /**
+   * @param {(item: ChartGroup, index: number) => any} callback 
+   */
+  callChartGroup(callback) {
+    return this.children.map((item, index) => {
+      if (item instanceof ChartGroup) {
+        return callback(item, index)
+      }
+      return null
+    })
+  }
+
+  getCharGroup(collection, index = 0) {
+    return new ChartGroup({
+      ...this.getArguments(),
+      sort: index,
+      DateLine: this.DateLine,
+      RulerLine: this.RulerLine,
+      collection,
+      graphics: this.graphics,
+    })
+  }
+
+  /**
+   * @returns {ChartGroup[]}
+   */
+  getCharGroupList() {
+    return this.props.types.filter(m => m.data.length).map((model, index) => {
+      const collection = new Collection()
+      model.data.filter(m => model.id === m.eventTypeId).forEach(item => {
+        collection.set(item.id, item)
       })
+      return this.getCharGroup(collection, index)
     })
   }
 
@@ -141,28 +184,25 @@ export default class EventChart extends BaseContainer {
     const paddingY = 8
     this.tipText.alpha = tipAlpha
     if (tipAlpha) {
-      if (this.target.length === 1) {
-        this.tipText.text = this.target.find(p => p).title
-      } else {
-        this.tipText.text = `count: ${this.target.length}`
-      }
+      // TODO 資料過多的呈現方式
+      this.tipText.text = this.target.map(p => p.title).join(',')
     }
     const width = this.tipText.width + paddingX * 2
     const height = this.tipText.height + paddingY * 2
     if (tipAlpha) {
       if (this.tipX + width + offsetX * 2 >= this.props.canvasWidth) {
-        this.tipText.x = this.tipX - width - offsetX - this.x + paddingX
-        this.tipGraphics.x = this.tipX - width - offsetX - this.x 
+        this.tipText.x = this.tipX - this.x - width - offsetX + paddingX
+        this.tipGraphics.x = this.tipX - this.x - width - offsetX
       } else {
-        this.tipText.x = this.tipX + offsetX - this.x + paddingX
-        this.tipGraphics.x = this.tipX + offsetX - this.x
+        this.tipText.x = this.tipX - this.x + offsetX + paddingX
+        this.tipGraphics.x = this.tipX - this.x + offsetX
       }
       if (this.tipY + height + offsetY * 2 >= this.props.canvasHeight) {
-        this.tipText.y = this.tipY - height - offsetY - this.y + paddingY
-        this.tipGraphics.y = this.tipY - height - offsetY - this.y
+        this.tipText.y = this.tipY - this.y - height - offsetY + paddingY
+        this.tipGraphics.y = this.tipY - this.y - height - offsetY
       } else {
-        this.tipText.y = this.tipY + offsetY - this.y + paddingY
-        this.tipGraphics.y = this.tipY + offsetY - this.y
+        this.tipText.y = this.tipY - this.y + offsetY + paddingY
+        this.tipGraphics.y = this.tipY - this.y + offsetY
       }
     }
     this.tipGraphics
@@ -181,10 +221,18 @@ export default class EventChart extends BaseContainer {
     this.y = this.DateLine.getClientHeight()
     // 計算群組高度給予碰撞
     let groupY = this.translateY
-    this.children.forEach(container => {
+    this.callChartGroup((container) => {
       if (container instanceof ChartGroup) {
         container.y = groupY
         groupY += container.getCharGroupHeight()
+      }
+    })
+  }
+
+  setCollapse(bool, type) {
+    this.callChartGroup((container) => {
+      if (container.model.id === type || container.model.name === type) {
+        container.setCollapse(bool)
       }
     })
   }

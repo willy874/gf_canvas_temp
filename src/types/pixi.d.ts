@@ -13,5 +13,3 @@ type ITextStyle = import('pixi.js').ITextStyle
 type InteractionEvent = import('pixi.js').InteractionEvent
 
 type InteractionData = import('pixi.js').InteractionData
-
-type EventEmitter = import('eventemitter3').EventEmitterStatic

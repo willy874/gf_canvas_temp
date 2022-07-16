@@ -22,7 +22,7 @@ export default class RulerItem extends BaseContainer {
       toTopRulerLine
     } = args
 
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    /** @type {TimelineApplicationOptions} */
     this.props = props
 
     // === Components ===

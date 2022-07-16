@@ -55,5 +55,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true,
   },
-  "cSpell.words": []
+  "cSpell.words": [
+    "WEBGLCONTEXTLOST",
+    "WEBGLCONTEXTRESTORED"
+  ]
 }

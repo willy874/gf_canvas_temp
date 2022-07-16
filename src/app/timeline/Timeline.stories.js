@@ -24,14 +24,14 @@ export default {
     height: {
       control: 'number'
     },
-    isShowCoordinates: {
+    isShowMark: {
       control: 'boolean'
     },
   },
 };
 
 /**
- * @param {TimelineProps} props 
+ * @param {Partial<TimelineApplicationArguments>} props 
  * @returns {Element}
  */
 const Template = (props) => {
@@ -258,7 +258,7 @@ export const AutoTime = Template.bind({});
 AutoTime.args = {
   unit: TimeUnit.WEEK,
   baseTime: Date.now(),
-  isShowCoordinates: true,
+  isShowMark: true,
   width: 1000,
   height: 500,
   types

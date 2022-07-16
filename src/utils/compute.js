@@ -84,7 +84,7 @@ export function getUnitFormat(unit) {
     case TimeUnit.HOUR:
       return 'HH:mm'
     case TimeUnit.HOUR12:
-      return 'MM/DD HH:mm'
+      return 'HH:mm'
     case TimeUnit.DAY:
       return 'MM/DD'
     case TimeUnit.DAY3:

@@ -1,14 +1,37 @@
-interface TimelineProps {
-  width: number
-  height: number
-  startTime: number
-  endTime: number
-  x: number
-  y: number
-  list: EventModel[]
+interface TimelineApplicationArguments {
+  isInit: boolean;
+  isCollapse: boolean;
+  isShowMark: boolean;
+  unit: string | number;
+  baseTime: number | string | Date;
+  types: IEventTypeModel[];
+  width: number;
+  height: number;
+  onClickMark: (...args: any[]) => void;
 }
 
-type TimingFunction = (x: number) => number
+interface TimelineComponents {
+  [name: string]: any;
+}
+
+
+type ArgumentsExcludeKey = 'width' | 'height' | 'baseTime' | 'isCollapse'
+
+interface TimelineApplicationOptions extends Omit<TimelineApplicationArguments, ArgumentsExcludeKey> {
+  baseTime: number;
+  isAllCollapse: boolean;
+  canvasWidth: number;
+  canvasHeight: number;
+  translateX: number;
+  translateY: number;
+  fontSize: number;
+  fontFamily: string;
+  lineSolidWidth: number;
+  textPaddingX: number;
+  textPaddingY: number;
+  colors: number[];
+  getComponents: () => TimelineComponents;
+}
 
 interface IDynamicProperties {
   status: number
@@ -21,10 +44,6 @@ interface IDynamicProperties {
   updateDate: (t: number) => void
 }
 
-interface TimeLimeChartItemInfo extends GraphicsInfo {
-  model: EventModel
-}
-
 interface IEventModel {
   id: number
   startTime: number
@@ -33,20 +52,6 @@ interface IEventModel {
   type: string
 }
 
-type PrimaryKeyType = string | number
-
-class ICollection<T> {
-  current: Record<PrimaryKeyType, T>
-  primaryKey: PrimaryKeyType
-  has(key: PrimaryKeyType): boolean
-  keys(): string[]
-  all(): T[]
-  clear(): void
-  get(key: PrimaryKeyType): T
-  set(key: PrimaryKeyType, value: any): void
-  delete(key: PrimaryKeyType): void
-  getList(sort: Array<PrimaryKeyType | T>): T[]
-}
 
 // 理想的 Model
 interface ITimeLimeChartModel {
@@ -62,9 +67,4 @@ interface IEventTypeModel {
   name: string
   collapse: boolean
   data: ITimeLimeChartModel[]
-}
-
-interface MatrixInfo {
-  row: number
-  matrix: string[]
 }

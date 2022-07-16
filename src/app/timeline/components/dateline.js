@@ -12,9 +12,9 @@ import {
 } from '@base/enums'
 import BaseContainer from '@base/components/base-container'
 import DynamicProperties from '@base/components/dynamic-properties'
-import TimeText from './time-text'
-
-// TODO: 文字過長要清除
+import {
+  TimeText
+} from './class'
 
 export default class DateLine extends BaseContainer {
   constructor(args) {
@@ -23,7 +23,7 @@ export default class DateLine extends BaseContainer {
       props,
     } = args;
 
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    /** @type {TimelineApplicationOptions} */
     this.props = props
 
     // === Props Attribute ===
@@ -119,7 +119,7 @@ export default class DateLine extends BaseContainer {
     this.dateList = [this.props.baseTime]
     this.insertDateList()
     this.startTime = this.dateList[0]
-    this.endTime = this.dateList[0]
+    this.endTime = this.dateList[this.dateList.length - 1]
     this.textList = this.dateList.map((date, index) => this.getText(date, index))
     this.textUpdate()
     this.refreshText(...this.textList)
@@ -195,46 +195,46 @@ export default class DateLine extends BaseContainer {
   }
 
   prependText() {
-    if (this.getStartLeft() + this.props.translateX > 0) {
-      const date = this.textList[0].date - this.getPixelTime() * this.getScaleWidth()
-      this.startTime = date
-      if (this.dateList[0] > date) {
-        this.dateList.unshift(date)
-      }
-      const text = this.getText(date, 0)
-      this.textList.unshift(text)
-      this.addChild(text)
-    }
-    // console.log(this.x, this.getEndLeft());
-    if (this.x > this.getEndLeft()) {
-      // this.removeChild(this.textList.shift())
-    }
+    const date = this.textList[0].date - this.getPixelTime() * this.getScaleWidth()
+    this.startTime = date
+    this.dateList.unshift(date)
+    const text = this.getText(date, 0)
+    this.textList.unshift(text)
+    this.addChild(text)
   }
 
   appendText() {
-    const endX = this.props.canvasWidth - this.getScaleWidth()
     const last = this.textList.length - 1
-    if (this.getEndLeft() + this.props.translateX - endX < 0) {
-      const date = this.textList[last].date + this.getPixelTime() * this.getScaleWidth()
-      this.endTime = date
-      if (this.dateList[last] < date) {
-        this.dateList.push(date)
-      }
-      const text = this.getText(date, last)
-      this.textList.push(text)
-      this.addChild(text)
+    const date = this.textList[last].date + this.getPixelTime() * this.getScaleWidth()
+    this.endTime = date
+    this.dateList.push(date)
+    const text = this.getText(date, last)
+    this.textList.push(text)
+    this.addChild(text)
+  }
+
+  addText(start, end) {
+    if (end < 0) {
+      this.appendText()
     }
-    // console.log(this.x, this.getStartLeft());
-    if (this.x > this.getStartLeft()) {
-      // this.removeChild(this.textList.shift())
+    if (start > 0) {
+      this.prependText()
     }
   }
 
+  getBaseToStartWidth() {
+    return this.getStartLeft() + this.props.translateX
+  }
+
+  getBaseToEndWidth() {
+    const initDiff = this.props.canvasWidth - this.getScaleWidth() * 2
+    return this.getEndLeft() - initDiff + this.props.translateX
+  }
+
   textUpdate() {
-    // console.log('translateX', this.props.translateX);
-    // console.log('textList', this.textList);
-    this.prependText()
-    this.appendText()
+    const start = this.getBaseToStartWidth()
+    const end = this.getBaseToEndWidth()
+    this.addText(start, end)
     this.basePointIndex = this.dateList.findIndex(t => t === this.props.baseTime)
     this.updateTextsPosition()
   }
@@ -279,6 +279,7 @@ export default class DateLine extends BaseContainer {
       return new TimeText({
         props: this.props,
         date,
+        index,
         format: 'HH:mm:ss',
         fontWeight: '700',
       })
@@ -287,6 +288,7 @@ export default class DateLine extends BaseContainer {
       return new TimeText({
         props: this.props,
         date,
+        index,
         format: 'MM/DD',
         fontWeight: '700',
       })
@@ -304,6 +306,7 @@ export default class DateLine extends BaseContainer {
       props: this.props,
       date,
       format,
+      index,
       fontWeight: '400',
     })
   }

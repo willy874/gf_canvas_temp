@@ -1,10 +1,61 @@
 import {
+  Text,
+} from '@base/pixi';
+import {
   Collection,
   getEndPointByTrigonometric,
   insertByIndex,
+  dateFormat,
   isSet
 } from '@base/utils'
 
+export class TimeText extends Text {
+  constructor(args) {
+    const {
+      props,
+      date,
+      format,
+      index,
+    } = args
+    super('', {
+      fontFamily: props.fontFamily,
+      fontSize: props.fontSize,
+      fontWeight: '400',
+      align: 'center',
+      ...args
+    })
+
+    /** @type {TimelineApplicationOptions} */
+    this.props = props
+
+    /** @type {number} */
+    this.date = date
+    /** @type {number} */
+    this.index = index
+    /** @type {string} */
+    this.format = format
+    this.update()
+  }
+
+  setTime(date) {
+    this.date = date
+    this.update()
+  }
+
+  setFormat(format) {
+    this.format = format
+    this.update()
+  }
+
+  setPosition(x, y) {
+    this.x = x - this.width / 2
+    this.y = y + this.props.textPaddingY
+  }
+
+  update() {
+    this.text = dateFormat(this.date, this.format)
+  }
+}
 export class TimeMark {
   constructor(args) {
     const {
@@ -138,7 +189,6 @@ export class TimeLineMatrix extends MatrixCollection {
       startTime,
       endTime,
       isCollapse,
-      filter
     } = args
     const width = Math.floor((endTime - startTime) / pixelTime)
 
@@ -172,15 +222,10 @@ export class TimeLineMatrix extends MatrixCollection {
      */
     this.endTime = endTime
     /**
-     * @private
+     * @public
      * @type {boolean}
      */
     this.isCollapse = isCollapse || false
-    /**
-     * @private
-     * @type {(p: ITimeLimeChartModel) => boolean}
-     */
-    this.filter = filter || null
     /**
      * @private
      * @type {number[]}
@@ -190,10 +235,8 @@ export class TimeLineMatrix extends MatrixCollection {
      * @type {MarkInfo[]}
      */
     this.marks = []
-    // console.log('Matrix Init');
-    // console.time()
+
     this.matrixInit()
-    // console.timeEnd()
     this.matrixUpdate()
   }
 
@@ -202,15 +245,8 @@ export class TimeLineMatrix extends MatrixCollection {
   }
 
   matrixUpdate() {
-    // console.log('Matrix Update');
-    // console.log('Update Draw Matrix');
-    // console.time()
     this.current = this.createDrawMatrix()
-    // console.timeEnd()
-    // console.log('Update Mark List');
-    // console.time()
     this.marks = this.createMarkList(this.current)
-    // console.timeEnd()
   }
 
   /**
@@ -234,7 +270,7 @@ export class TimeLineMatrix extends MatrixCollection {
         if (current >= 1) level1++
         if (current >= 2) level2++
         if (current >= 3) level3++
-        if (current === 0  && next === 0 && prev === 0) {
+        if (current === 0 && next === 0 && prev === 0) {
           continue
         }
         if (isSet(prev) && isSet(current) && prev < current) {

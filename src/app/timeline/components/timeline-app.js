@@ -20,46 +20,8 @@ import {
   getUnitValue
 } from '@base/utils';
 
-
-
-/**
- * @typedef {Object} TimelineApplicationArguments
- * @property {boolean} isInit
- * @property {boolean} isShowCoordinates
- * @property {number | string} unit
- * @property {number|string|Date} baseTime
- * @property {number} width
- * @property {number} height
- * @property {IEventTypeModel[]} types
- */
-/**
- * @typedef {Object} TimelineComponents
- * @property {DateLine} DateLine
- * @property {RulerGroup} RulerLine
- * @property {EventChart} EventChart
- */
-/**
- * @typedef {Object} TimelineApplicationOptions
- * @property {boolean} isInit
- * @property {boolean} isShowCoordinates
- * @property {number | string} unit
- * @property {number} canvasWidth
- * @property {number} canvasHeight
- * @property {number} baseTime
- * @property {IEventTypeModel[]} types
- * @property {number} translateX
- * @property {number} translateY
- * @property {FontSize} fontSize
- * @property {FontFamily} fontFamily
- * @property {number} lineSolidWidth
- * @property {number} textPaddingX
- * @property {number} textPaddingY
- * @property {number[]} colors
- * @property {() => TimelineComponents} getComponents
- */
 export default class TimelineApplication {
   constructor(args = {}) {
-    console.time()
     /** @type {TimelineApplicationOptions} */
     this.options = this.resolveOptions(args)
     this.app = new Application({
@@ -80,10 +42,6 @@ export default class TimelineApplication {
     /** @type {EventChart} */
     this.eventChart = this.createEventChart()
 
-    // console.log('dateLine', this.dateLine);
-    // console.log('rulerLine', this.rulerLine);
-    // console.log('eventChart', this.eventChart);
-
     this.root.addChild(this.dateLine, this.rulerLine, this.eventChart)
     this.app.stage.addChild(this.root)
 
@@ -91,29 +49,18 @@ export default class TimelineApplication {
     canvas.addEventListener(EventType.WEBGLCONTEXTLOST, (e) => e.preventDefault());
     canvas.addEventListener(EventType.WEBGLCONTEXTRESTORED, (e) => window.location.reload());
 
-    console.timeEnd()
-    console.time()
     fetchEventData(true).then(data => {
       if (data) {
         // console.clear()
         this.options.types = data
         this.eventChart.init()
-        console.timeEnd()
-        // data.forEach(typeModel => {
-        //   const map = {};
-        //   typeModel.data.forEach(p => {
-        //     if (map[p.inScrubbingCenterTime]) {
-        //       map[p.inScrubbingCenterTime].push(p)
-        //     } else {
-        //       map[p.inScrubbingCenterTime] = [p]
-        //     }
-        //   });
-        //   console.log(typeModel.name, 'Event', map);
-        // })
       }
     })
   }
 
+  /**
+   * @private
+   */
   checkDepend() {
     if (!this.app) {
       throw new Error('Application is not defined.')
@@ -127,6 +74,9 @@ export default class TimelineApplication {
     return false;
   }
 
+  /**
+   * @private
+   */
   createDateLine() {
     if (this.checkDepend()) {
       throw new Error('About depend is not defined.')
@@ -138,6 +88,9 @@ export default class TimelineApplication {
     })
   }
 
+  /**
+   * @private
+   */
   createRulerGroup() {
     if (this.checkDepend()) {
       throw new Error('About depend is not defined.')
@@ -152,6 +105,9 @@ export default class TimelineApplication {
     })
   }
 
+  /**
+   * @private
+   */
   createEventChart() {
     if (this.checkDepend()) {
       throw new Error('About depend is not defined.')
@@ -170,17 +126,7 @@ export default class TimelineApplication {
   }
 
   /**
-   * @param {Partial<TimelineApplicationArguments>} args
-   */
-  setOptions(args) {
-    const options = this.resolveOptions(args)
-    if (typeof args.isShowCoordinates !== 'undefined') this.options.isShowCoordinates = options.isShowCoordinates
-    if (typeof args.unit !== 'undefined') this.options.unit = options.unit
-    if (typeof args.baseTime !== 'undefined') this.options.baseTime = options.baseTime
-    if (typeof args.types !== 'undefined') this.options.types = options.types
-  }
-
-  /**
+   * @private
    * @param {Partial<TimelineApplicationArguments>} args 
    * @returns {TimelineApplicationOptions}
    */
@@ -190,12 +136,13 @@ export default class TimelineApplication {
     return {
       // Arguments
       isInit: typeof args.isInit === 'boolean' ? args.isInit : true,
-      isShowCoordinates: typeof args.isShowCoordinates === 'boolean' ? args.isShowCoordinates : true,
+      isShowMark: typeof args.isShowMark === 'boolean' ? args.isShowMark : true,
+      isAllCollapse: !!args.isCollapse,
       unit,
       canvasWidth: typeof args.width === 'number' ? args.width : this.app.view.width,
       canvasHeight: typeof args.height === 'number' ? args.height : this.app.view.height,
       baseTime,
-      types: args.types || [],
+      types: JSON.parse(JSON.stringify(args.types)) || [],
       translateX: 0,
       translateY: 0,
       // Static
@@ -204,7 +151,8 @@ export default class TimelineApplication {
       lineSolidWidth: 1,
       textPaddingX: 4,
       textPaddingY: 4,
-      colors: [0xFFB2C1, 0xA0D0F5, 0xFFE6AE, 0xABDFE0, 0xCCB2FF],
+      colors: [0xFF1946, 0x359BEA, 0xFFC034, 0x55B5B7, 0x7335ED],
+      onClickMark: args.onClickMark || (() => {}),
 
       // @ts-ignore Components
       getComponents: () => ({
@@ -215,6 +163,12 @@ export default class TimelineApplication {
     }
   }
 
+  /**
+   * @private
+   * @param {string|number|Date} time 
+   * @param {string|number} unit 
+   * @returns {number}
+   */
   getBaseTime(time, unit) {
     const date = new Date(time)
     if (String(date) === 'Invalid Date') {
@@ -230,6 +184,8 @@ export default class TimelineApplication {
         return dateToNumber(dateFormat(time, 'YYYY/MM'))
       case value >= day:
         return dateToNumber(dateFormat(time, 'YYYY/MM/DD'))
+      case value >= hour * 8:
+        return dateToNumber(dateFormat(time, 'YYYY/MM/DD'))
       case value >= hour:
         return dateToNumber(dateFormat(time, 'YYYY/MM/DD HH'))
       case value >= minute:
@@ -239,4 +195,38 @@ export default class TimelineApplication {
     }
   }
 
+  /**
+   * @public
+   * @param {Partial<TimelineApplicationArguments>} args
+   */
+  setOptions(args) {
+    const options = this.resolveOptions(args)
+    if (typeof args.unit !== 'undefined') this.options.unit = options.unit
+    if (typeof args.baseTime !== 'undefined') this.options.baseTime = options.baseTime
+    if (typeof args.types !== 'undefined') this.options.types = options.types
+    this.dateLine.init()
+    this.rulerLine.init()
+    this.eventChart.init()
+  }
+
+  /**
+   * @public
+   * @param {boolean} bool 
+   */
+  setShowMark(bool) {
+    this.options.isShowMark = bool
+  }
+
+  /**
+   * @public
+   * @param {boolean} bool 
+   * @param {string|number} type 
+   */
+  setCollapse(bool, type) {
+    if (type) {
+      this.eventChart.setCollapse(bool, type)
+    } else {
+      this.options.isAllCollapse = bool
+    }
+  }
 }

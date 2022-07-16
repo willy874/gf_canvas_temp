@@ -6,9 +6,6 @@ import {
   TimeMark,
   TimeLineMatrix
 } from './class'
-import {
-  Collection
-} from '@base/utils'
 
 export default class ChartGroup extends BaseContainer {
   constructor(args) {
@@ -19,7 +16,7 @@ export default class ChartGroup extends BaseContainer {
       collection
     } = args
 
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    /** @type {TimelineApplicationOptions} */
     this.props = props
 
     // === Components ===
@@ -42,12 +39,7 @@ export default class ChartGroup extends BaseContainer {
     /** @type {IEventTypeModel} */
     this.model = model
     /** @type {ICollection<ITimeLimeChartModel>} */
-    this.collection = new Collection()
-    collection.all().forEach(item => {
-      if (model.id === item.eventTypeId) {
-        this.collection.set(item.id, item)
-      }
-    })
+    this.collection = collection
     // === Base Attribute ===
     /** @type {number} */
     this.paddingX = 16
@@ -68,15 +60,12 @@ export default class ChartGroup extends BaseContainer {
   }
 
   init() {
-    this.model.data.forEach(model => {
-      this.collection.set(model.id, model)
-    })
     this.matrix = new TimeLineMatrix({
       collection: this.collection,
       pixelTime: this.DateLine.getPixelTime(),
       startTime: this.DateLine.getViewStartTime(),
       endTime: this.DateLine.getViewEndTime(),
-      isCollapse: this.model.collapse,
+      isCollapse: this.props.isAllCollapse ? true : this.model.collapse,
     })
     this.markList = this.createTimeMarkList()
     // console.log('drawChartItem')
@@ -214,7 +203,7 @@ export default class ChartGroup extends BaseContainer {
   }
 
   drawMarkList() {
-    if (this.props.isShowCoordinates) {
+    if (this.props.isShowMark) {
       this.markList.forEach(item => {
         if (this.isShowY(item.top - this.getChartClientHeight() / 2)) {
           item.draw()
@@ -227,5 +216,10 @@ export default class ChartGroup extends BaseContainer {
     this.drawDivider()
     this.drawChartItem()
     this.drawMarkList()
+  }
+
+  setCollapse(bool) {
+    if (this.model) this.model.collapse = bool
+    if (this.matrix) this.matrix.isCollapse = bool
   }
 }

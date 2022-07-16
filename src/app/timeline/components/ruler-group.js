@@ -14,7 +14,7 @@ export default class RulerGroup extends BaseContainer {
       props,
     } = args
 
-    /** @type {import('./timeline-app').TimelineApplicationOptions} */
+    /** @type {TimelineApplicationOptions} */
     this.props = props
 
     // === Components ===
@@ -38,8 +38,12 @@ export default class RulerGroup extends BaseContainer {
     this.plusButton.on(EventType.MOUSEDOWN, (e) => this.onPlusMouseDown(e))
     this.plusButton.on(EventType.MOUSEUP, (e) => this.onPlusMouseUp(e))
 
-    this.addChild(this.createRulerItem(), this.plusButton)
     this.create()
+  }
+
+  init() {
+    this.removeChildren()
+    this.addChild(this.createRulerItem(), this.plusButton)
   }
 
   draw() {
