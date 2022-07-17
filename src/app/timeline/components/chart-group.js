@@ -6,6 +6,11 @@ import {
   TimeMark,
   TimeLineMatrix
 } from './class'
+import {
+  colorToHex,
+  darken,
+  hexToNumber
+} from '@base/utils'
 
 export default class ChartGroup extends BaseContainer {
   constructor(args) {
@@ -13,7 +18,8 @@ export default class ChartGroup extends BaseContainer {
     const {
       props,
       sort,
-      collection
+      collection,
+      isMergeGroup
     } = args
 
     /** @type {TimelineApplicationOptions} */
@@ -34,6 +40,8 @@ export default class ChartGroup extends BaseContainer {
     // === Props Attribute ===
     /** @type {number} */
     this.sort = sort
+    /** @type {boolean} */
+    this.isMergeGroup = isMergeGroup
     /** @type {TimeLineMatrix} */
     this.matrix = null
     /** @type {IEventTypeModel} */
@@ -68,15 +76,6 @@ export default class ChartGroup extends BaseContainer {
       isCollapse: this.props.isAllCollapse ? true : this.model.collapse,
     })
     this.markList = this.createTimeMarkList()
-    // console.log('drawChartItem')
-    // console.time()
-    // this.drawChartItem()
-    // console.timeEnd()
-    // console.log('drawMarkList')
-    // console.time()
-    // this.drawMarkList()
-    // console.timeEnd()
-    // this.drawDivider()
 
     this.refreshChildren(this.chartGraphics, this.markGraphics)
   }
@@ -86,11 +85,23 @@ export default class ChartGroup extends BaseContainer {
   }
 
   /**
-   * @param {number} index
+   * @param {string} [key]
    * @returns {number}
    */
-  getColor(index) {
-    return this.props.colors[index % this.props.colors.length]
+  getColor(key) {
+    if (key && this.isMergeGroup) {
+      const models = this.matrix.map.get(key)
+      if (models && models.length === 1) {
+        const model = this.collection.get(models[0])
+        if (model) {
+          const index = this.props.types.map(p => p.id).indexOf(model.eventTypeId)
+          return this.props.colors[index % this.props.colors.length]
+        }
+      }
+      return 0xBBBBBB
+    } else {
+      return this.props.colors[this.sort % this.props.colors.length]
+    }
   }
 
   /**
@@ -122,7 +133,7 @@ export default class ChartGroup extends BaseContainer {
   getMatrixPoint(column, row) {
     return [this.getPointX(column), this.getPointY(row)]
   }
-  
+
   getChartClientHeight() {
     return this.chartHeight * 2 + this.chartPaddingY * 2
   }
@@ -139,7 +150,7 @@ export default class ChartGroup extends BaseContainer {
         clientLeft: this.x + data.column,
         clientTop: this.y + this.getChartClientHeight() / 2 + this.DateLine.getClientHeight() + top - this.chartPaddingY,
         props: this.props,
-        color: this.getColor(this.sort),
+        color: this.getColor(`${data.column},${data.row}`),
         graphics: this.markGraphics,
         collection: this.collection,
       })
@@ -153,8 +164,16 @@ export default class ChartGroup extends BaseContainer {
     this.markList = this.createTimeMarkList()
   }
 
+  /**
+   * @param {number} color 
+   * @param {number} count 
+   * @returns 
+   */
+  getDarkColor(color, count = 0) {
+    return hexToNumber(darken(colorToHex(color), count))
+  }
+
   drawChartItem() {
-    const color = this.getColor(this.sort)
     const chartClientHeight = this.getChartClientHeight()
     for (let row = 0; row < this.matrix.current.length; row++) {
       const columns = this.matrix.current[row]
@@ -162,6 +181,7 @@ export default class ChartGroup extends BaseContainer {
       const rowY = pointY + this.chartPaddingY
       for (let column = 0; column < columns.length; column++) {
         const type = columns[column]
+        const color = this.getColor(`${column},${row}`)
         if (this.isShowY(pointY, chartClientHeight)) {
           const columnX = this.getPointX(column)
           if (type) {
@@ -172,19 +192,19 @@ export default class ChartGroup extends BaseContainer {
           }
           switch (type) {
             case 1:
-            this.chartGraphics
-              .beginFill(color)
-              .drawRect(columnX, rowY + this.chartHeight / 2, 2, this.chartHeight)
+              this.chartGraphics
+                .beginFill(color)
+                .drawRect(columnX, rowY + this.chartHeight / 2, 2, this.chartHeight)
               break;
             case 2:
-            this.chartGraphics
-              .beginFill(color)
-              .drawRect(columnX, rowY, 1, this.chartHeight * 2)
+              this.chartGraphics
+                .beginFill(this.getDarkColor(color, 18))
+                .drawRect(columnX, rowY, 1, this.chartHeight * 2)
               break;
             case 3:
-            this.chartGraphics
-              .beginFill(0xBBBBBB)
-              .drawRect(columnX, rowY, 1, this.chartHeight * 2)
+              this.chartGraphics
+                .beginFill(color)
+                .drawRect(columnX, rowY, 1, this.chartHeight * 2)
               break;
           }
         }
@@ -219,7 +239,10 @@ export default class ChartGroup extends BaseContainer {
   }
 
   setCollapse(bool) {
-    if (this.model) this.model.collapse = bool
-    if (this.matrix) this.matrix.isCollapse = bool
+    if (this.matrix && this.matrix.idMatrix.length > 1) {
+      if (this.model) this.model.collapse = bool
+      this.matrix.isCollapse = bool
+      this.matrix.matrixUpdate()
+    }
   }
 }

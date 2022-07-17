@@ -6,7 +6,6 @@ import {
   getEndPointByTrigonometric,
   insertByIndex,
   dateFormat,
-  isSet
 } from '@base/utils'
 
 export class TimeText extends Text {
@@ -202,7 +201,6 @@ export class TimeLineMatrix extends MatrixCollection {
      */
     this.collection = collection
     /**
-     * @private
      * @type {ICollection<Array<string|number>>}
      */
     this.map = new Collection()
@@ -249,6 +247,29 @@ export class TimeLineMatrix extends MatrixCollection {
     this.marks = this.createMarkList(this.current)
   }
 
+  plusLevel(current, level) {
+    for (let index = 0; index < level.length; index++) {
+      if (current >= index) {
+        level[index]++
+      }
+    }
+  }
+
+  getWidth(current, level) {
+    for (let index = 0; index < level.length; index++) {
+      if (current === index) {
+        const width = level[index]
+        level[index] = 0
+        return width
+      }
+    }
+    return null
+  }
+
+  isTypeSet(type) {
+    return [0, 1, 2, 3].includes(type)
+  }
+
   /**
    * @param {number[][]} matrix
    * @return {MarkInfo[]}
@@ -260,46 +281,29 @@ export class TimeLineMatrix extends MatrixCollection {
       let prev = null
       let current = null
       let next = null
-      let level1 = 0
-      let level2 = 0
-      let level3 = 0
+      const level = new Array(4).fill(0)
       for (let column = 0; column < columns.length; column++) {
         prev = columns[column - 1]
         current = columns[column]
         next = columns[column + 1]
-        if (current >= 1) level1++
-        if (current >= 2) level2++
-        if (current >= 3) level3++
+        this.plusLevel(current, level)
         if (current === 0 && next === 0 && prev === 0) {
           continue
         }
-        if (isSet(prev) && isSet(current) && prev < current) {
-          const models = this.map.get(`${column},${row}`)
-          marks.push({
+        const models = this.map.get(`${column},${row}`) || []
+        if (this.isTypeSet(prev) && this.isTypeSet(current) && prev < current) {
+          marks[marks.length] = {
             column,
             row,
             models,
             type: current,
             width: -1,
             isDraw: true
-          })
+          }
           continue
         }
-        if (isSet(current) && isSet(next) && current > next) {
-          const models = this.map.get(`${column},${row}`)
-          let width = null
-          if (current === 0) {
-            width = level1
-            level1 = 0
-          }
-          if (current === 2) {
-            width = level2
-            level2 = 0
-          }
-          if (current === 3) {
-            width = level3
-            level3 = 0
-          }
+        if (this.isTypeSet(current) && this.isTypeSet(next) && current > next) {
+          const width = this.getWidth(current, level)
           marks[marks.length] = {
             column,
             row,
@@ -309,6 +313,24 @@ export class TimeLineMatrix extends MatrixCollection {
             isDraw: width >= 3
           }
           continue
+        }
+        if (current === 3) {
+          const prevModels = this.map.get(`${column - 1},${row}`) || []
+          const nextModels = this.map.get(`${column + 1},${row}`) || []
+          const prevText = prevModels.join(',')
+          const nextText = nextModels.join(',')
+          const currentText = models.join(',')
+          if (prevText && nextText && currentText) {
+            if (prevText !== currentText || nextText !== currentText) {
+              marks[marks.length] = {
+                column,
+                row,
+                models,
+                type: current,
+                width: level[3],
+              }
+            }
+          }
         }
       }
     }
@@ -338,6 +360,8 @@ export class TimeLineMatrix extends MatrixCollection {
     return matrix
   }
 
+
+
   /**
    * @param {number[][]} matrix 
    * @param {ITimeLimeChartModel} model 
@@ -360,14 +384,15 @@ export class TimeLineMatrix extends MatrixCollection {
         if (!models) {
           throw new Error('Models is not catch.')
         }
-        if (value === 1 || value === 2) {
-          if (models.length && models.map(id => this.collection.get(id)).some(m => m.eventTypeId !== model.eventTypeId)) {
+        models.push(model.id)
+        if (models.length > 1) {
+          if (models.reduce((set, id) => set.add(this.collection.get(id).eventTypeId), new Set()).size > 1) {
             matrix[row][column] = 3
+            continue
           }
         }
         if (value === 1) {
           matrix[row][column] = 2
-          models.push(model.id)
           continue
         }
       }

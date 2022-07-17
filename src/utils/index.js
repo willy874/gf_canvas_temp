@@ -1,4 +1,5 @@
 export * from './collection'
+export * from './color'
 export * from './compute'
 export * from './condition'
 export * from './date'

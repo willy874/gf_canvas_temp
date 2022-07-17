@@ -12,6 +12,7 @@ export const EventType = {
   MOUSEOUT: 'mouseout',
   MOUSEOVER: 'mouseover',
   MOUSEUP: 'mouseup',
+  MOUSEWHEEL: 'mousewheel',
   POINTERMOVE: 'pointermove',
   POINTEROVER: 'pointerover',
   POINTEROUT: 'pointerout',

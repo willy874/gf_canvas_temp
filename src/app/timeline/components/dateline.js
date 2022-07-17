@@ -40,7 +40,7 @@ export default class DateLine extends BaseContainer {
     /** @type {number} */
     this.basePointIndex = 0
     /** @type {number} */
-    this.textWidth = 40
+    this.textWidth = 45
     /** @type {number} */
     this.textHeight = 25
     /** @type {number} */
@@ -117,7 +117,9 @@ export default class DateLine extends BaseContainer {
 
   init() {
     this.dateList = [this.props.baseTime]
-    this.insertDateList()
+    for (let index = 0; index < 20; index++) {
+      this.insertDateList()
+    }
     this.startTime = this.dateList[0]
     this.endTime = this.dateList[this.dateList.length - 1]
     this.textList = this.dateList.map((date, index) => this.getText(date, index))
@@ -253,11 +255,8 @@ export default class DateLine extends BaseContainer {
   }
 
   insertDateList() {
-    if (this.basePointIndex - this.getScaleBlock() < 0) {
-      this.dateList.unshift(this.dateList[0] - this.getPixelTime() * this.getScaleWidth())
-      this.basePointIndex = this.dateList.findIndex(t => t === this.props.baseTime)
-      this.insertDateList()
-    }
+    this.dateList.unshift(this.dateList[0] - this.getPixelTime() * this.getScaleWidth())
+    this.basePointIndex = this.dateList.indexOf(this.props.baseTime)
   }
 
   /**

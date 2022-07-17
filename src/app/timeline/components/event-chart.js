@@ -10,6 +10,9 @@ import {
   GlobalEvent
 } from '@base/utils';
 import {
+  uniq
+} from '@base/utils/lodash';
+import {
   EventType
 } from '@base/enums';
 
@@ -42,6 +45,8 @@ export default class EventChart extends BaseContainer {
     this.tipX = 0
     /** @type {number} */
     this.tipY = 0
+    /** @type {number} */
+    this.tipMaxTextLength = 15
     /** @type {boolean} */
     this.isShowTip = false
     /** @type {ITimeLimeChartModel[]} */
@@ -66,7 +71,7 @@ export default class EventChart extends BaseContainer {
     this.props.types.forEach(model => {
       model.data.forEach(m => this.collection.set(m.id, m))
     })
-    const children = this.props.isAllCollapse ? [this.getCharGroup(this.collection)] : this.getCharGroupList()
+    const children = this.props.isAllCollapse ? [this.getCharGroup(this.collection, -1)] : this.getCharGroupList()
     children.forEach(container => {
       container.markGraphics.interactive = true
       container.markGraphics.buttonMode = true
@@ -152,7 +157,7 @@ export default class EventChart extends BaseContainer {
     })
   }
 
-  getCharGroup(collection, index = 0) {
+  getCharGroup(collection, index) {
     return new ChartGroup({
       ...this.getArguments(),
       sort: index,
@@ -160,6 +165,7 @@ export default class EventChart extends BaseContainer {
       RulerLine: this.RulerLine,
       collection,
       graphics: this.graphics,
+      isMergeGroup: index === -1
     })
   }
 
@@ -184,8 +190,13 @@ export default class EventChart extends BaseContainer {
     const paddingY = 8
     this.tipText.alpha = tipAlpha
     if (tipAlpha) {
+      const text = uniq(this.target.map(p => p.title)).join(',')
       // TODO 資料過多的呈現方式
-      this.tipText.text = this.target.map(p => p.title).join(',')
+      if (text.length >= this.tipMaxTextLength) {
+        this.tipText.text = text.substring(0, this.tipMaxTextLength - 3) + '...'
+      } else {
+        this.tipText.text = text
+      }
     }
     const width = this.tipText.width + paddingX * 2
     const height = this.tipText.height + paddingY * 2
@@ -230,10 +241,12 @@ export default class EventChart extends BaseContainer {
   }
 
   setCollapse(bool, type) {
-    this.callChartGroup((container) => {
-      if (container.model.id === type || container.model.name === type) {
-        container.setCollapse(bool)
-      }
-    })
+    if (!this.props.isAllCollapse) {
+      this.callChartGroup((container) => {
+        if (container.model.id === type || container.model.name === type) {
+          container.setCollapse(bool)
+        }
+      })
+    }
   }
 }

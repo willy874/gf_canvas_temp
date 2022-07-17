@@ -10,6 +10,7 @@ import {
 import DateLine from './dateline'
 import EventChart from './event-chart'
 import RulerGroup from './ruler-group'
+import CollapseButton from './collapse-button'
 import RootContainer from '@base/components/root'
 import {
   fetchEventData
@@ -29,11 +30,31 @@ export default class TimelineApplication {
       height: this.options.canvasHeight,
       backgroundAlpha: 0
     })
+    /** @type {number} */
+    this.wheelY = 0
+    /** @type {number} */
+    this.timeOut = 0
+    /** @type {TimeUnit[]} */
+    this.timeUnitLevel = [
+      TimeUnit.SECOND,
+      TimeUnit.MINUTE,
+      TimeUnit.HALF_HOUR,
+      TimeUnit.HOUR,
+      TimeUnit.HOUR12,
+      TimeUnit.DAY,
+      TimeUnit.DAY3,
+      TimeUnit.WEEK,
+      TimeUnit.HALF_MONTH,
+      TimeUnit.MONTH,
+      TimeUnit.QUARTER,
+    ]
+
     /** @type {RootContainer} */
     this.root = new RootContainer({
       props: this.options,
       app: this.app,
     })
+
     /** @type {DateLine} */
     this.dateLine = this.createDateLine()
     this.options.translateX = this.options.canvasWidth - this.dateLine.getScaleWidth() * 2
@@ -42,20 +63,71 @@ export default class TimelineApplication {
     /** @type {EventChart} */
     this.eventChart = this.createEventChart()
 
-    this.root.addChild(this.dateLine, this.rulerLine, this.eventChart)
+
+    this.collapseButton = new CollapseButton({
+      props: this.options,
+      app: this.app,
+      root: this.root,
+      setCollapse: this.setCollapse.bind(this)
+    })
+
+    this.root.addChild(this.dateLine, this.rulerLine, this.eventChart, this.collapseButton)
     this.app.stage.addChild(this.root)
 
     const canvas = this.app.view
     canvas.addEventListener(EventType.WEBGLCONTEXTLOST, (e) => e.preventDefault());
     canvas.addEventListener(EventType.WEBGLCONTEXTRESTORED, (e) => window.location.reload());
+    canvas.addEventListener(EventType.MOUSEWHEEL, (e) => this.onMouseWheel(e))
 
     fetchEventData(true).then(data => {
       if (data) {
-        // console.clear()
         this.options.types = data
         this.eventChart.init()
       }
     })
+  }
+
+  /**
+   * @param {WheelEvent|Event} event
+   */
+  onMouseWheel(event) {
+    if (event instanceof WheelEvent) {
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.stopPropagation()
+        event.preventDefault()
+        this.wheelY += event.deltaY
+      }
+      if (typeof this.options.unit === 'string') {
+        const index = this.timeUnitLevel.indexOf(this.options.unit)
+        if (index !== -1) {
+          let unit = null
+          if (this.wheelY > 200) {
+            unit = this.timeUnitLevel[index + 1]
+          }
+          if (this.wheelY < -200) {
+            unit = this.timeUnitLevel[index - 1]
+          }
+          if (unit) {
+            console.log(unit);
+            this.onUnitChange(unit)
+          }
+        }
+      }
+      clearTimeout(this.timeOut);
+      this.timeOut = window.setTimeout(() => {
+        this.wheelY = 0
+      }, 1000)
+    }
+  }
+
+  /**
+   * @param {TimeUnit} unit 
+   */
+  onUnitChange(unit) {
+    this.setOptions({
+      unit
+    })
+    this.wheelY = 0
   }
 
   /**
@@ -142,7 +214,7 @@ export default class TimelineApplication {
       canvasWidth: typeof args.width === 'number' ? args.width : this.app.view.width,
       canvasHeight: typeof args.height === 'number' ? args.height : this.app.view.height,
       baseTime,
-      types: JSON.parse(JSON.stringify(args.types)) || [],
+      types: args.types ? JSON.parse(JSON.stringify(args.types)) : [],
       translateX: 0,
       translateY: 0,
       // Static
@@ -227,6 +299,7 @@ export default class TimelineApplication {
       this.eventChart.setCollapse(bool, type)
     } else {
       this.options.isAllCollapse = bool
+      this.eventChart.init()
     }
   }
 }

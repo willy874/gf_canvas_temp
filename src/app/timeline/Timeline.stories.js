@@ -68,13 +68,13 @@ const list = [{
   id: 5,
   startTime: dayjs('2022/04/05').valueOf(),
   endTime: dayjs('2022/05/5').valueOf(),
-  title: '這是攻擊5',
+  title: '這是活動1',
   eventTypeId: 2
 }, {
   id: 6,
   startTime: dayjs('2022/05/05').valueOf(),
   endTime: dayjs('2022/05/25').valueOf(),
-  title: '這是攻擊6',
+  title: '這是維護1',
   eventTypeId: 3
 }, {
   id: 7,
