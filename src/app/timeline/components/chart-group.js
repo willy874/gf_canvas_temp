@@ -174,6 +174,8 @@ export default class ChartGroup extends BaseContainer {
   }
 
   drawChartItem() {
+    // 11.791259765625 ms ~ 24.298095703125 ms
+    // console.time()
     const chartClientHeight = this.getChartClientHeight()
     for (let row = 0; row < this.matrix.current.length; row++) {
       const columns = this.matrix.current[row]
@@ -206,10 +208,15 @@ export default class ChartGroup extends BaseContainer {
                 .beginFill(color)
                 .drawRect(columnX, rowY, 1, this.chartHeight * 2)
               break;
+            default:
+              // this.chartGraphics
+              //   .beginFill(0xeeeeee, 0)
+              //   .drawRect(columnX, rowY + this.chartHeight / 2, 2, this.chartHeight)
           }
         }
       }
     }
+    // console.timeEnd()
   }
 
   drawDivider() {

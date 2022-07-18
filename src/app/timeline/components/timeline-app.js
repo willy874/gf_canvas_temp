@@ -81,8 +81,7 @@ export default class TimelineApplication {
 
     fetchEventData(true).then(data => {
       if (data) {
-        this.options.types = data
-        this.eventChart.init()
+        this.setOptions({ types: data })
       }
     })
   }
@@ -271,6 +270,8 @@ export default class TimelineApplication {
    * @param {Partial<TimelineApplicationArguments>} args
    */
   setOptions(args) {
+    // Test 752.061279296875ms
+    console.time()
     const options = this.resolveOptions(args)
     if (typeof args.unit !== 'undefined') this.options.unit = options.unit
     if (typeof args.baseTime !== 'undefined') this.options.baseTime = options.baseTime
@@ -278,6 +279,8 @@ export default class TimelineApplication {
     this.dateLine.init()
     this.rulerLine.init()
     this.eventChart.init()
+    this.collapseButton.init()
+    console.timeEnd()
   }
 
   /**

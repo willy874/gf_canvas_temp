@@ -6,29 +6,41 @@ export default class CollapseButton extends BaseContainer {
   constructor(args) {
     super(args)
 
+    const {
+      props,
+      setCollapse,
+    } = args
+
     /** @type {TimelineApplicationOptions} */
-    this.props = args.props
+    this.props =props
 
     this.size = 16
     this.padding = 4
+
+    this.setCollapse = setCollapse
 
     this.allCollapse = new Graphics()
     this.allCollapse.interactive = true
     this.allCollapse.buttonMode = true
     this.allCollapse.on(EventType.CLICK, () => {
-      args.setCollapse(!this.props.isAllCollapse)
+      setCollapse(!this.props.isAllCollapse)
     })
+    this.list = []
+  
+    this.create()
+  }
 
+  init() {
     this.list = this.props.types.map(data => {
       const collapse = new Graphics()
       collapse.interactive = true
       collapse.buttonMode = true
       collapse.on(EventType.CLICK, () => {
-        args.setCollapse(!data.collapse, data.name)
+        this.setCollapse(!data.collapse, data.name)
       })
       return collapse
     })
-  
+    this.removeChildren()
     this.addChild(this.allCollapse, ...this.list)
   }
 
@@ -54,7 +66,7 @@ export default class CollapseButton extends BaseContainer {
 
     this.list.forEach((collapse, index) => {
       const model = this.props.types[index]
-      const color = this.props.colors[index]
+      const color = this.props.colors[index % this.props.colors.length]
       const alpha = model.collapse ? 0.7 : 0.3
       collapse
         .beginFill(color, alpha)

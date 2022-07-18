@@ -68,6 +68,7 @@ export default class EventChart extends BaseContainer {
   }
 
   init() {
+    this.collection.clear()
     this.props.types.forEach(model => {
       model.data.forEach(m => this.collection.set(m.id, m))
     })
