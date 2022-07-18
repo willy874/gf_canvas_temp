@@ -108,7 +108,6 @@ export default class TimelineApplication {
             unit = this.timeUnitLevel[index - 1]
           }
           if (unit) {
-            console.log(unit);
             this.onUnitChange(unit)
           }
         }

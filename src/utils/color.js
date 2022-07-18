@@ -176,7 +176,6 @@ export function colorToHex(c) {
  * @returns {number}
  */
 export function hexToNumber(color) {
-  // @ts-ignore
   const [r, g, b] = hexToRGB(color)
   .replace(/(?:\(|\)|rgb|RGB)*/g, '')
   .split(',')
